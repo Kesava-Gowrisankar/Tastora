@@ -18,7 +18,7 @@ def user_profile_upload_to(instance, filename):
 
 
 class Profile(TimeStampedModel):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile', db_index=True)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
     profile_picture = models.ImageField(upload_to=user_profile_upload_to, blank=True, null=True, default='default.png')
     bio = models.CharField(max_length=1000, blank=True)
     location = models.CharField(max_length=100, blank=True)
@@ -62,7 +62,7 @@ class Recipe(TimeStampedModel):
     likes = models.PositiveIntegerField(default=0)
 
     def get_first_image_url(self):
-        latest_image = self.images.order_by('created_at').first()
+        latest_image = self.images.all().last()
         if latest_image and latest_image.image:
             return latest_image.image.url
         return '/static/images/default-recipe.jpg'
@@ -89,7 +89,7 @@ class Recipe(TimeStampedModel):
 
 
 class Nutrition(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='nutritions')
+    recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
     calories = models.PositiveIntegerField(help_text="Estimated calories per serving")
     protein = models.PositiveIntegerField(help_text="Estimated protein per serving")
     fat = models.PositiveIntegerField(help_text="Estimated fat per serving")
