@@ -1,0 +1,26 @@
+<div class="flex flex-wrap gap-3 items-center mb-3 pb-2  ">
+  <input type="text" name="ingredient_name[]" placeholder="Ingredient name"
+         class="flex-1 border border-gray-400 rounded px-1  py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder-gray-400 transition">
+
+  <input type="number" step="0.01" name="ingredient_quantity[]" placeholder="Qty"
+         class="w-24 border border-gray-400 rounded px-3 py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder-gray-400 transition">
+
+  <select name="ingredient_unit[]" 
+          class="border border-gray-400 rounded px-3 py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 transition">
+    <option value="0">grams</option>
+    <option value="1">kg</option>
+    <option value="2">tsp</option>
+    <option value="3">tbsp</option>
+    <option value="4">cup</option>
+    <option value="5">piece</option>
+  </select>
+
+  <label class="flex items-center text-sm text-gray-600">
+    <input type="checkbox" name="ingredient_optional[]" value="True" class="mr-1 accent-gray-700"> Optional
+  </label>
+
+  <button type="button" onclick="this.closest('div').remove()"
+          class="text-gray-700 hover:text-black font-semibold transition">
+    ✖
+  </button>
+</div>
