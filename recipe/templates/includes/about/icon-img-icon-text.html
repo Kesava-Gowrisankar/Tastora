@@ -1,0 +1,18 @@
+{% load static %}
+
+<div class="relative w-56  h-56 overflow-hidden rounded-3xl">
+    <!-- Image -->
+    <img src="{% static card_img %}" alt="Home Image"
+         class="absolute inset-0 w-full h-full object-cover scale-x-[-1]" />
+
+    <!-- Text Overlay -->
+    <div class="absolute bottom-2 flex items-center px-2 py-1 rounded-full z-10  bg-white text-white space-x-2 mx-2">
+        {{ card_icon2|safe }}
+        <h1 class="font-semibold  font-inter text-sm text-black ">{{ card_text2 }}</h1>
+    </div>
+
+    <div class="absolute top-4 right-4 rounded-full bg-black px-2 py-1">
+        {{ card_icon1|safe }}
+        <h1 class="font-semibold  font-inter text-sm text-white ">{{ card_text1 }}</h1>
+    </div>
+</div>
