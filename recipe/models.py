@@ -66,9 +66,24 @@ class Recipe(TimeStampedModel):
         if latest_image and latest_image.image:
             return latest_image.image.url
         return '/static/images/default-recipe.jpg'
+    
+    def get_second_image_url(self):
+        images = self.images.order_by('created_at')
+        if images[1].image:
+            return images[1].image.url
+        return '/static/images/default-recipe.jpg'
 
     def get_absolute_url(self):
         return reverse('recipe:recipe_detail', kwargs={'pk': self.pk})
+    
+    def difficulty_display(self):
+        return {1: 'Easy', 2: 'Medium', 3: 'Hard'}.get(self.difficulty, 'Unknown')
+
+    def prep_time_display(self):
+        return f"{self.prep_time} min"
+
+    def total_time_display(self):
+        return f"{self.total_time} min"
 
     class Meta:
         ordering = ("-created_at", "title")
