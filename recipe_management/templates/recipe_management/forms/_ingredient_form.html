@@ -1,26 +1,52 @@
-<div class="flex flex-wrap gap-3 items-center mb-3 pb-2  ">
-  <input type="text" name="ingredient_name[]" placeholder="Ingredient name"
-         class="flex-1 border border-gray-400 rounded px-1  py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder-gray-400 transition">
+{% load widget_tweaks %}
 
-  <input type="number" step="0.01" name="ingredient_quantity[]" placeholder="Qty"
-         class="w-24 border border-gray-400 rounded px-3 py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 placeholder-gray-400 transition">
+<div class="ingredient-form border p-4 mb-3 rounded-md bg-gray-50 flex flex-col gap-3">
+  <div class="flex items-start justify-between">
+    <h3 class="text-sm font-semibold text-gray-700">Ingredient</h3>
+    <button type="button" class="remove-ingredient text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded" title="Remove ingredient">✖</button>
+  </div>
 
-  <select name="ingredient_unit[]" 
-          class="border border-gray-400 rounded px-3 py-2 focus:ring-gray-500 focus:border-gray-500 text-gray-900 transition">
-    <option value="0">grams</option>
-    <option value="1">kg</option>
-    <option value="2">tsp</option>
-    <option value="3">tbsp</option>
-    <option value="4">cup</option>
-    <option value="5">piece</option>
-  </select>
+  <div class="flex flex-col sm:flex-row sm:space-x-3 gap-2">
+    <div class="flex-1">
+      {{ form.name.label_tag }}
+      {{ form.name|add_class:"w-full border rounded p-2" }}
+      {% if form.name.errors %}
+        <div class="text-red-600 text-sm">{{ form.name.errors }}</div>
+      {% endif %}
+    </div>
 
-  <label class="flex items-center text-sm text-gray-600">
-    <input type="checkbox" name="ingredient_optional[]" value="True" class="mr-1 accent-gray-700"> Optional
-  </label>
+    <div class="w-32">
+      {{ form.quantity.label_tag }}
+      {{ form.quantity|add_class:"w-full border rounded p-2" }}
+      {% if form.quantity.errors %}
+        <div class="text-red-600 text-sm">{{ form.quantity.errors }}</div>
+      {% endif %}
+    </div>
 
-  <button type="button" onclick="this.closest('div').remove()"
-          class="text-gray-700 hover:text-black font-semibold transition">
-    ✖
-  </button>
+    <div class="w-40">
+      {{ form.unit.label_tag }}
+      {{ form.unit|add_class:"w-full border rounded p-2" }}
+      {% if form.unit.errors %}
+        <div class="text-red-600 text-sm">{{ form.unit.errors }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="flex items-center">
+    {{ form.optional }}
+    <label class="ml-2 text-sm text-gray-600">Optional</label>
+    {% if form.optional.errors %}
+      <div class="text-red-600 text-sm ml-2">{{ form.optional.errors }}</div>
+    {% endif %}
+  </div>
+
 </div>
+
+{% if new_total is not None %}
+  <!-- Update TOTAL_FORMS dynamically -->
+  <input id="id_form-TOTAL_FORMS"
+         type="hidden"
+         name="form-TOTAL_FORMS"
+         value="{{ new_total }}"
+         hx-swap-oob="true">
+{% endif %}

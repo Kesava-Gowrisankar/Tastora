@@ -1,9 +1,9 @@
+from operator import add
 from django.urls import path
-from .views import CreateRecipeView, AddIngredientFormView
+from . import views
 
-app_name = "recipe_management"  # ✅ Required for namespacing
-
+app_name = "recipe_management"
 urlpatterns = [
-    path("manage/create/", CreateRecipeView.as_view(), name="create_recipe"),
-    path("manage/add-ingredient-form/", AddIngredientFormView.as_view(), name="add_ingredient_form"),
+    path("manage/create/", views.CreateRecipeView.as_view(), name="create_recipe"),
+    path("manage/add-ingredient-form/", views.AddIngredientFormView.as_view(), name="add_ingredient_form"),
 ]
