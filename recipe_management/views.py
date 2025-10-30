@@ -88,11 +88,11 @@ class CreateRecipeView(View):
                         )
                         ingredient.save()
 
-                    messages.success(request, "✅ Recipe created successfully!")
+                    messages.success(request, "Recipe created successfully!")
                     return redirect('recipe:home')
 
             except Exception as e:
-                messages.error(request, f"❌ Error while saving the recipe: {e}")
+                messages.error(request, "An unexpected error occurred while saving the recipe.")
 
         else:
             # Collect detailed error messages
@@ -106,7 +106,7 @@ class CreateRecipeView(View):
             if not ingredient_formset.is_valid():
                 err_msgs.append(f"Ingredient formset errors: {ingredient_formset.errors} {ingredient_formset.non_form_errors()}")
 
-            messages.error(request, "❌ Please correct the errors below. " + " | ".join(err_msgs))
+            messages.error(request, "Please correct the errors below. " + " | ".join(err_msgs))
 
         return render(request, self.template_name, forms)
 
