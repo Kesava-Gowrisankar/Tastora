@@ -1,0 +1,15 @@
+{% load static %}
+
+<div class="popular-recipe mb-8 mx-auto w-[90vw]">
+  <h1 class="text-5xl mb-6">
+    Popular <span class="text-orange-400">recipes</span> Today
+  </h1>
+
+  <div class="flex space-x-4 ">
+    {% for recipe in popular %}
+  {% include 'includes/about/popular-recipe.html' with card_img=recipe.get_first_image_url card_text2=recipe.title card_icon1='<i class="bi bi-hand-thumbs-up"></i>' card_text1=recipe.likes %}
+    
+  {% endfor %}
+
+  </div>
+</div>
