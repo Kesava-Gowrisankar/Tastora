@@ -42,22 +42,32 @@
     
 
     <!-- Ingredients -->
-    <div class="border-t rounded-xl border-gray-300 pt-6 overflow-auto h-full w-full col-span-2 bg-white p-3">
+    <div class="border-t rounded-xl border-gray-300 pt-6 h-full w-full col-span-2 bg-white p-3">
       <h1 class="text-xl font-semibold text-gray-700 mb-3">Ingredients </h1>
 
-      <div class="overflow-hidden">
-        <div id="ingredient-list" class=" h-64 overflow-x-auto ">
-        {% include "recipe_management/forms/_ingredient_form.html" %}
-      </div>
-      </div>
-      <button type="button"
-        hx-get="{% url 'recipe_management:add_ingredient_form' %}"
-        hx-target="#ingredient-list"
-        hx-swap="beforeend"
-        class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition">
-        ➕ Add Ingredient
-      </button>
+      <div class="relative">
+        <!-- Constrain list height and allow scrolling on overflow -->
+        <div id="ingredient-list" class="max-h-80 overflow-y-auto pr-4 pb-20">
+          {# management form is required for formset validation and HTMX updates #}
+          {{ ingredient_formset.management_form }}
+          <!-- Render initial formset if needed -->
+          {% for form in ingredient_formset %}
+            {% include 'recipe_management/forms/_ingredient_form.html' with form=form %}
+          {% endfor %}
+        </div>
 
+        <!-- Add button pinned bottom-left of the panel -->
+        <div class="absolute left-4 bottom-4 z-10">
+          <button type="button"
+                  hx-get="{% url 'recipe_management:add_ingredient_form' %}"
+                  hx-target="#ingredient-list"
+                  hx-swap="beforeend"
+                  hx-include="input[name='form-TOTAL_FORMS']"
+                  class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition shadow-lg">
+            ➕ Add Ingredient
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Submit -->
@@ -69,4 +79,68 @@
     </div>
   </form>
 </div>
+<script>
+// Keep indices contiguous and update TOTAL_FORMS; prevent removing the last form
+(function(){
+  function reindexForms() {
+    const container = document.getElementById('ingredient-list');
+    if (!container) return;
+    const forms = Array.from(container.querySelectorAll('.ingredient-form'));
+    forms.forEach((formDiv, index) => {
+      formDiv.dataset.index = index;
+      formDiv.querySelectorAll('input, select, textarea').forEach(el => {
+        if (!el.name) return;
+        el.name = el.name.replace(/form-\d+-/, 'form-' + index + '-');
+        if (el.id) el.id = el.id.replace(/form-\d+-/, 'form-' + index + '-');
+      });
+      formDiv.querySelectorAll('label').forEach(lbl => {
+        if (lbl.htmlFor) lbl.htmlFor = lbl.htmlFor.replace(/form-\d+-/, 'form-' + index + '-');
+      });
+    });
+
+    // Update TOTAL_FORMS
+    const total = forms.length;
+    const totalInput = document.querySelector('input[name="form-TOTAL_FORMS"]');
+    if (totalInput) totalInput.value = total;
+    const totalById = document.getElementById('id_form-TOTAL_FORMS');
+    if (totalById) totalById.value = total;
+  }
+
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.matches('.remove-ingredient')) {
+      e.preventDefault();
+      const container = document.getElementById('ingredient-list');
+      const forms = container.querySelectorAll('.ingredient-form');
+      // keep at least one form
+      if (forms.length <= 1) {
+        // clear inputs instead of removing the last form
+        const inputs = forms[0].querySelectorAll('input, textarea, select');
+        inputs.forEach(i => {
+          if (i.type === 'checkbox' || i.type === 'radio') i.checked = false;
+          else i.value = '';
+        });
+        reindexForms();
+        return;
+      }
+      const item = e.target.closest('.ingredient-form');
+      if (!item) return;
+      item.remove();
+      reindexForms();
+    }
+  });
+
+  // After HTMX adds a fragment, ensure names/ids and TOTAL_FORMS are consistent
+  document.body.addEventListener('htmx:afterSwap', function(evt){
+    if (evt.detail && evt.detail.target) {
+      const target = evt.detail.target;
+      if (target.id === 'ingredient-list' || (target.closest && target.closest('#ingredient-list'))) {
+        reindexForms();
+      }
+    }
+  });
+
+  // ensure correct indexing on initial load
+  document.addEventListener('DOMContentLoaded', reindexForms);
+})();
+</script>
 {% endblock %}
