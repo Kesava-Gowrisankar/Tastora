@@ -27,6 +27,11 @@ class Profile(TimeStampedModel):
     def __str__(self):
         return str(self.user)
 
+    def get_profile_picture_url(self):
+        if self.profile_picture and hasattr(self.profile_picture, 'url'):
+            return self.profile_picture.url
+        return os.path.join(settings.MEDIA_URL, 'default.png')
+
 
 class Recipe(TimeStampedModel):
     class CategoryTypes:
@@ -60,8 +65,7 @@ class Recipe(TimeStampedModel):
                                              validators=[MaxValueValidator(300), MinValueValidator(5)])
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
-    likes = models.PositiveIntegerField(default=0)
-
+    likes = models.PositiveIntegerField(default=0, db_index=True)
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
         return os.path.join(settings.MEDIA_URL, default_image)
