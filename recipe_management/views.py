@@ -89,10 +89,10 @@ class CreateRecipeView(View):
                         ingredient.save()
 
                     messages.success(request, "Recipe created successfully!")
-                    return redirect('recipe:home')
+                    return redirect('recipe_management:create_recipe')
 
             except Exception as e:
-                messages.error(request, "An unexpected error occurred while saving the recipe.")
+                messages.error(request, f"Error while saving the recipe: {e}")
 
         else:
             # Collect detailed error messages
