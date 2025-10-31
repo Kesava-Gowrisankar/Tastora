@@ -109,11 +109,38 @@
   document.addEventListener('click', function(e){
     if (e.target && e.target.matches('.remove-ingredient')) {
       e.preventDefault();
+      const item = e.target.closest('.ingredient-form');
+      if (!item) return;
+
+      // find the hidden id input for this form (if any)
+      const idInput = item.querySelector('input[name$="-id"]');
+      const deleteInput = item.querySelector('input[name$="-DELETE"]');
+
+      // If this is an existing instance (has id value), toggle its DELETE flag and visually mark it
+      if (idInput && idInput.value) {
+        // toggle delete
+        const willDelete = !(deleteInput && deleteInput.checked);
+        if (deleteInput) deleteInput.checked = willDelete;
+
+        if (willDelete) {
+          item.classList.add('opacity-50');
+          item.style.textDecoration = 'line-through';
+          e.target.textContent = '↺'; // change to undo icon
+        } else {
+          item.classList.remove('opacity-50');
+          item.style.textDecoration = 'none';
+          e.target.textContent = '✖';
+        }
+
+        // keep the form in the DOM so management form indices stay stable
+        return;
+      }
+
+      // For new (unsaved) forms (no id value), we can remove the DOM node outright
       const container = document.getElementById('ingredient-list');
       const forms = container.querySelectorAll('.ingredient-form');
-      // keep at least one form
+      // if removing last form, just clear it
       if (forms.length <= 1) {
-        // clear inputs instead of removing the last form
         const inputs = forms[0].querySelectorAll('input, textarea, select');
         inputs.forEach(i => {
           if (i.type === 'checkbox' || i.type === 'radio') i.checked = false;
@@ -122,8 +149,7 @@
         reindexForms();
         return;
       }
-      const item = e.target.closest('.ingredient-form');
-      if (!item) return;
+
       item.remove();
       reindexForms();
     }

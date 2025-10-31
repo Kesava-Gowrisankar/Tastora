@@ -88,25 +88,14 @@ class CreateRecipeView(View):
                         )
                         ingredient.save()
 
-                    messages.success(request, "✅ Recipe created successfully!")
-                    return redirect('recipe:home')
+                    messages.success(request, "Recipe created successfully!")
+                    return redirect('recipe_management:create_recipe')
 
             except Exception as e:
-                messages.error(request, f"❌ Error while saving the recipe: {e}")
+                messages.error(request, f"Error while saving the recipe: {e}")
 
         else:
-            # Collect detailed error messages
-            err_msgs = []
-            if not recipe_form.is_valid():
-                err_msgs.append(f"Recipe errors: {recipe_form.errors}")
-            if not nutrition_form.is_valid():
-                err_msgs.append(f"Nutrition errors: {nutrition_form.errors}")
-            if not recipe_image_form.is_valid():
-                err_msgs.append(f"Image errors: {recipe_image_form.errors}")
-            if not ingredient_formset.is_valid():
-                err_msgs.append(f"Ingredient formset errors: {ingredient_formset.errors} {ingredient_formset.non_form_errors()}")
-
-            messages.error(request, "❌ Please correct the errors below. " + " | ".join(err_msgs))
+            messages.error(request, "Please correct the errors below.")
 
         return render(request, self.template_name, forms)
 

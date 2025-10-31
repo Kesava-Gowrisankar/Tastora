@@ -34,11 +34,17 @@ class AddRecipeTestCase(TestCase):
             'sugar': 8,
             'fiber': 4,
             'carbohydrates': 40,
-            'ingredient_name[]': ['Tomato', 'Cheese'],
-            'ingredient_quantity[]': ['100', '50'],
-            'ingredient_unit[]': ['0', '0'],  # grams
-            'ingredient_optional[]': ['True', ''],
             'image': image,
+            # Ingredient Formset data
+            'form-TOTAL_FORMS': '2',
+            'form-INITIAL_FORMS': '0',
+            'form-0-name': 'Tomato',
+            'form-0-quantity': '100',
+            'form-0-unit': '0',
+            'form-0-optional': 'on',
+            'form-1-name': 'Cheese',
+            'form-1-quantity': '50',
+            'form-1-unit': '0',
         }
 
         response = self.client.post(self.url, data, follow=True)
