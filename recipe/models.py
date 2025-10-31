@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
+import os
 
 
 class TimeStampedModel(models.Model):
@@ -25,6 +26,11 @@ class Profile(TimeStampedModel):
 
     def __str__(self):
         return str(self.user)
+
+    def get_profile_picture_url(self):
+        if self.profile_picture and hasattr(self.profile_picture, 'url'):
+            return self.profile_picture.url
+        return os.path.join(settings.MEDIA_URL, 'default.png')
 
 
 class Recipe(TimeStampedModel):
@@ -59,16 +65,49 @@ class Recipe(TimeStampedModel):
                                              validators=[MaxValueValidator(300), MinValueValidator(5)])
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
-    likes = models.PositiveIntegerField(default=0)
+    liked_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='liked_recipes',
+        blank=True
+    )
+    likes = models.PositiveIntegerField(default=0, editable=False, db_index=True)
 
+    def default_recipe_image_url(self):
+        default_image = 'default-recipe.jpg'
+        return os.path.join(settings.MEDIA_URL, default_image)
+    
     def get_first_image_url(self):
         latest_image = self.images.all().last()
         if latest_image and latest_image.image:
             return latest_image.image.url
-        return '/static/images/default-recipe.jpg'
+        return self.default_recipe_image_url()
+    
+    
+    def get_second_image_url(self):
+        image = self.images.order_by('created_at')
+
+        if image.count() > 1 and image[1].image:
+            return image[1].image.url
+        return self.default_recipe_image_url()
+
+    def get_remaining_image(self):
+        image = self.images.order_by('created_at')
+
+        if image.count() > 2 and image[2].image:
+            return image[2:]
+        return None
 
     def get_absolute_url(self):
-        return reverse('recipe:recipe_detail', kwargs={'pk': self.pk})
+        return reverse('recipe_management:recipe_detail', kwargs={'pk': self.pk})
+    
+    def difficulty_display(self):
+        return {0: 'Easy', 1: 'Medium', 2: 'Hard'}.get(self.difficulty, 'Unknown')
+
+    def prep_time_display(self):
+        return f"{self.prep_time} min"
+
+    def total_time_display(self):
+        return f"{self.total_time} min"
 
     class Meta:
         ordering = ("-created_at", "title")
