@@ -1,30 +1,9 @@
+{% extends 'auth_base.html' %}
+
 {% load widget_tweaks %}
+{% block content %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tastora | Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Montserrat', 'sans-serif'],
-                        'roboto': ['Roboto', 'sans-serif'],
-                        'open': ['Open Sans', 'sans-serif'],
-                        'inter': ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-gray-50 flex justify-center items-center min-h-screen ">
-
-    <div class="w-full max-w-sm bg-white rounded-lg shadow-md p-8">
+<div class="w-full max-w-sm bg-white rounded-lg shadow-md p-8">
         <!-- Logo -->
         <div class="flex justify-center mb-8 font-sans">
             <h1 class="text-3xl font-extrabold text-gray-800">
@@ -83,5 +62,4 @@
         </div>
     </div>
 
-</body>
-</html>
+{% endblock %}

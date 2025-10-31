@@ -20,7 +20,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
         return Profile.objects.get_or_create(user=self.request.user)[0]
     
 class LogoutConfirmView(TemplateView):
-    template_name = "logout.html"
+    template_name = "logout_confirm.html"
 
 class CustomLoginView(LoginView):
     template_name = 'login.html'
@@ -34,7 +34,7 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ["username", "email", "password1", "password2"]
+        fields = ["username", "email"]
 
 
 class SignupView(CreateView):
