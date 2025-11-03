@@ -65,9 +65,9 @@ class Recipe(TimeStampedModel):
                                              validators=[MaxValueValidator(300), MinValueValidator(5)])
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
-    likes_user = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="liked_recipes", blank=True)
-    likes = models.PositiveIntegerField(default=0, db_index=True)
-    
+    likes = models.PositiveIntegerField(default=0)
+    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes_set', blank=True)
+
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
         return os.path.join(settings.MEDIA_URL, default_image)
@@ -86,6 +86,13 @@ class Recipe(TimeStampedModel):
             return image[1].image.url
         return self.default_recipe_image_url()
 
+    def get_remaining_image(self):
+        image = self.images.order_by('created_at')
+
+        if image.count() > 2 and image[2].image:
+            return image[2:]
+        return None
+
     def get_absolute_url(self):
         return reverse('recipe_management:recipe_detail', kwargs={'pk': self.pk})
     
@@ -97,6 +104,12 @@ class Recipe(TimeStampedModel):
 
     def total_time_display(self):
         return f"{self.total_time} min"
+    
+    def total_likes(self):
+        return self.liked_by.count()
+
+    def is_liked_by_user(self, user):
+        return self.liked_by.filter(pk=user.pk).exists()
 
     class Meta:
         ordering = ("-created_at", "title")
@@ -114,7 +127,19 @@ class Recipe(TimeStampedModel):
         if self.prep_time is not None and self.total_time is not None:
             if self.total_time < self.prep_time:
                 raise ValidationError("Total time cannot be less than prep time.")
+           
 
+class RecipeLike(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'recipe')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} liked {self.recipe}"
 
 class Nutrition(models.Model):
     recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
