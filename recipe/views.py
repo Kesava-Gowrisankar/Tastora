@@ -13,3 +13,13 @@ class HomePage(ListView):
         context['latest_recipes'] = recipes_qs.order_by('-created_at')[:5]
         context['popular_recipes'] = recipes_qs.order_by('-likes')[:5]
         return context
+
+
+class RecipePage(ListView):
+    model = Recipe
+    template_name='recipe.html'
+
+class RecipeDetailView(DetailView):
+    model = Recipe
+    template_name = 'recipe_detail.html'  
+    context_object_name = 'recipe'  
