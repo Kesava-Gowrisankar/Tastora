@@ -246,22 +246,28 @@ class EditRecipeView(View):
 
         return render(request, self.template_name, forms)
 
-@login_required
-def toggle_like(request, pk):
-    recipe = get_object_or_404(Recipe, pk=pk)
-    user = request.user
+class ToggleLikeView(LoginRequiredMixin, View):
+    """
+    Toggle like/unlike for a recipe via AJAX.
+    Returns JSON with updated like status and count.
+    """
 
-    existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
-    if existing_like.exists():
-        # Unlike
-        existing_like.delete()
-        liked = False
-    else:
-        # Like
-        RecipeLike.objects.create(user=user, recipe=recipe)
-        liked = True
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
 
-    return JsonResponse({
-        'liked': liked,
-        'total_likes': recipe.recipe_likes.count(),
-    })
+        existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
+        if existing_like.exists():
+            # Unlike
+            existing_like.delete()
+            liked = False
+        else:
+            # Like
+            RecipeLike.objects.create(user=user, recipe=recipe)
+            liked = True
+
+        return JsonResponse({
+            'liked': liked,
+            'total_likes': recipe.recipe_likes.count(),
+        })
+    
