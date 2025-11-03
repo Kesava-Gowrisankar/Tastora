@@ -44,6 +44,9 @@ class SignupView(CreateView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # Log the user in
+        
+        # Set backend explicitly for login
+        self.object.backend = 'django.contrib.auth.backends.ModelBackend'
         login(self.request, self.object)
-        return response      
+        
+        return response

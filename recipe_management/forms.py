@@ -16,8 +16,13 @@ class RecipeForm(forms.ModelForm):
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
-        if self.user and Recipe.objects.filter(title=title, author=self.user).exists():
-            raise forms.ValidationError("You already have a recipe with this title.")
+        if self.user:
+            qs = Recipe.objects.filter(title=title, author=self.user)
+            # If editing an existing recipe, exclude its own instance from the uniqueness check
+            if getattr(self, 'instance', None) and getattr(self.instance, 'pk', None):
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("You already have a recipe with this title.")
         return title
 
 class NutritionForm(forms.ModelForm):
@@ -50,4 +55,4 @@ class IngredientForm(forms.ModelForm):
             "unit": forms.Select(choices=Ingredient.UnitTypes.CHOICES),
             "optional": forms.CheckboxInput(),
         }
-IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=False)
+IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)

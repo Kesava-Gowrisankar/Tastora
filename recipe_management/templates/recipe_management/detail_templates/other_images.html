@@ -1,0 +1,12 @@
+<div>
+    {% if images %}
+        <h2 class="text-2xl font-semibold mb-4">More <span class="text-orange-400">Images</span></h2>
+        <div class="grid grid-cols-3 gap-4">
+            {% for img in images %}
+                <div class="rounded-lg overflow-hidden h-48">
+                    <img src="{{ img.image.url }}" alt="Recipe Image {{ forloop.counter }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

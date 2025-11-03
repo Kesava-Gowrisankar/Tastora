@@ -1,5 +1,4 @@
-import re
-from django.forms import formset_factory, modelform_factory, modelformset_factory
+from django.conf import settings
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,7 +6,8 @@ from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
+from django.http import JsonResponse
+from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 
 # Decorator to require login for CBV methods
@@ -126,11 +126,13 @@ class RecipeDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         recipe = self.get_object()
+        user = self.request.user
 
         # Get first and second image safely
         first_img = recipe.get_first_image_url()
         nutrition = getattr(recipe, 'nutrition', None)
         ingredients = recipe.ingredients.all()
+        liked = recipe.is_liked_by_user(user) if user.is_authenticated else False
 
         # Split instructions into lines (assuming instructions are stored as text with line breaks)
         points=recipe.instructions.split('.')
@@ -140,6 +142,7 @@ class RecipeDetailView(DetailView):
             'nutrition': nutrition,
             'ingredient': ingredients,
             'instruction': instruction_list,
+            'liked': liked,
         })
         return context
 
@@ -242,3 +245,23 @@ class EditRecipeView(View):
             messages.error(request, "Please correct the errors below. " + " | ".join(err_msgs))
 
         return render(request, self.template_name, forms)
+
+@login_required
+def toggle_like(request, pk):
+    recipe = get_object_or_404(Recipe, pk=pk)
+    user = request.user
+
+    existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
+    if existing_like.exists():
+        # Unlike
+        existing_like.delete()
+        liked = False
+    else:
+        # Like
+        RecipeLike.objects.create(user=user, recipe=recipe)
+        liked = True
+
+    return JsonResponse({
+        'liked': liked,
+        'total_likes': recipe.recipe_likes.count(),
+    })
