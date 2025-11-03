@@ -1,0 +1,12 @@
+<div class="flex justify-between mb-8">
+    {% include 'recipe_management/detail_templates/recipe_field_detail.html' with label_text='Cuisine' icon_class='bi-globe2' value_text=recipe.cuisine %}
+
+    {% include 'recipe_management/detail_templates/recipe_field_detail.html' with label_text='Servings' icon_class='bi-person' value_text=recipe.servings %}
+
+    {% include 'recipe_management/detail_templates/recipe_field_detail.html' with label_text='Prep Time' icon_class='bi-alarm' value_text=recipe.prep_time_display %}
+    
+    {% include 'recipe_management/detail_templates/recipe_field_detail.html' with label_text='Cook Time' icon_class='bi-alarm-fill' value_text=recipe.total_time_display %}
+    
+    {% include 'recipe_management/detail_templates/recipe_field_detail.html' with label_text='Difficulty' icon_class='bi-star' value_text=recipe.difficulty_display %}
+   
+</div>
