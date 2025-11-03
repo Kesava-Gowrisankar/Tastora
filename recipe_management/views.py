@@ -1,11 +1,20 @@
+<<<<<<< HEAD
 from django.shortcuts import render, redirect
+=======
+import re
+from django.forms import formset_factory, modelform_factory, modelformset_factory
+from django.shortcuts import get_object_or_404, render, redirect
+>>>>>>> 957cbe5 (Start Edit)
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
+<<<<<<< HEAD
 
+=======
+>>>>>>> 957cbe5 (Start Edit)
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 
@@ -141,3 +150,103 @@ class RecipeDetailView(DetailView):
             'instruction': instruction_list,
         })
         return context
+
+@method_decorator(login_required, name='dispatch')
+class EditRecipeView(View):
+    template_name = 'recipe_management/edit_recipe.html'
+
+    def get_forms(self, request, recipe):
+        # Bind forms with instance
+        recipe_form = RecipeForm(request.POST or None, request.FILES or None, instance=recipe, user=request.user)
+        nutrition_form = NutritionForm(request.POST or None, instance=getattr(recipe, 'nutrition', None))
+        recipe_image_form = RecipeImageForm(request.POST or None, request.FILES or None)
+        # Ingredient formset pre-filled
+        ingredient_formset = IngredientFormSetClass(
+            request.POST or None,
+            request.FILES or None,
+            queryset=recipe.ingredients.all()
+        )
+        return {
+            'recipeform': recipe_form,
+            'nutritionform': nutrition_form,
+            'recipe_image': recipe_image_form,
+            'ingredient_formset': ingredient_formset,
+            'recipe': recipe
+        }
+
+    def get(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        forms = self.get_forms(request, recipe)
+        return render(request, self.template_name, forms)
+
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        forms = self.get_forms(request, recipe)
+        recipe_form = forms['recipeform']
+        nutrition_form = forms['nutritionform']
+        recipe_image_form = forms['recipe_image']
+        ingredient_formset = forms['ingredient_formset']
+
+        if (recipe_form.is_valid() and
+            nutrition_form.is_valid() and
+            recipe_image_form.is_valid() and
+            ingredient_formset.is_valid()):
+            
+            try:
+                with transaction.atomic():
+                    # Update Recipe
+                    recipe = recipe_form.save(commit=False)
+                    recipe.author = request.user
+                    recipe.save()
+
+                    # Update Nutrition
+                    nutrition = nutrition_form.save(commit=False)
+                    nutrition.recipe = recipe
+                    nutrition.save()
+
+                    # Update Image
+                    uploaded_image = recipe_image_form.cleaned_data.get('image')
+                    recipe_default_image = 'default-recipe.jpg'
+
+                    if uploaded_image and hasattr(uploaded_image, 'name') and uploaded_image.name != recipe_default_image:
+                        image = recipe_image_form.save(commit=False)
+                        image.recipe = recipe
+                        image.save()
+
+                    # Update Ingredients
+                    # Delete removed ingredients
+                    for form in ingredient_formset.deleted_forms:
+                        if form.instance.pk:
+                            form.instance.delete()
+                    
+                    # Save or update existing ingredients
+                    for form in ingredient_formset:
+                        if form.cleaned_data.get('DELETE'):
+                            continue
+                        name = form.cleaned_data.get('name')
+                        if not name:
+                            continue
+                        ingredient = form.save(commit=False)
+                        ingredient.recipe = recipe
+                        ingredient.save()
+
+                    messages.success(request, "Recipe updated successfully!")
+                    return redirect('recipe_management:recipe_detail', pk=recipe.pk)
+
+            except Exception as e:
+                messages.error(request, f"Error while updating the recipe: {e}")
+        else:
+            # Provide detailed error messages to help the user see what failed
+            err_msgs = []
+            if not recipe_form.is_valid():
+                err_msgs.append(f"Recipe errors: {recipe_form.errors}")
+            if not nutrition_form.is_valid():
+                err_msgs.append(f"Nutrition errors: {nutrition_form.errors}")
+            if not recipe_image_form.is_valid():
+                err_msgs.append(f"Image errors: {recipe_image_form.errors}")
+            if not ingredient_formset.is_valid():
+                err_msgs.append(f"Ingredient formset errors: {ingredient_formset.errors} {ingredient_formset.non_form_errors()}")
+
+            messages.error(request, "Please correct the errors below. " + " | ".join(err_msgs))
+
+        return render(request, self.template_name, forms)
