@@ -37,6 +37,11 @@
           {{ recipe.total_likes }}
         </div>
       </button>
+
+      <a href="{% url 'recipe_management:add_to_collection' recipe.id %}" class="btn btn-outline-primary">
+  ➕ Add to Collection
+</a>
+
     </div>
   {% endif %}
 </div>

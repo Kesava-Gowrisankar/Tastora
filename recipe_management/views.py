@@ -7,8 +7,10 @@ from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 from django.http import JsonResponse
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
-from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from recipe.models import Collection, Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
+from .forms import CollectionForm, IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic.edit import FormView
 
 # Decorator to require login for CBV methods
 def login_required_method(view):
@@ -255,7 +257,6 @@ class ToggleLikeView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-
         existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
         if existing_like.exists():
             # Unlike
@@ -271,3 +272,46 @@ class ToggleLikeView(LoginRequiredMixin, View):
             'total_likes': recipe.recipe_likes.count(),
         })
     
+
+    
+
+class AddToCollectionView(LoginRequiredMixin, FormView):
+    template_name = 'recipe_management/add_to_collection.html'
+    form_class = CollectionForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.recipe = get_object_or_404(Recipe, pk=self.kwargs['recipe_id'])
+        self.collections = request.user.collections.all()
+        self.recipe_collections = self.collections.filter(recipes=self.recipe).values_list('id', flat=True)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        new_collection = form.save(commit=False)
+        new_collection.owner = self.request.user
+        new_collection.save()
+        new_collection.recipes.add(self.recipe)
+        return redirect('recipe_management:add_to_collection', recipe_id=self.recipe.id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'recipe': self.recipe,
+            'collections': self.collections,
+            'recipe_collections': list(self.recipe_collections),
+        })
+        return context
+
+
+# Class-based view to toggle a recipe in/out of a collection
+class ToggleCollectionMembershipView(LoginRequiredMixin, View):
+
+    def get(self, request, recipe_id, collection_id):
+        recipe = get_object_or_404(Recipe, pk=recipe_id)
+        collection = get_object_or_404(Collection, pk=collection_id, owner=request.user)
+
+        if recipe in collection.recipes.all():
+            collection.recipes.remove(recipe)
+        else:
+            collection.recipes.add(recipe)
+
+        return redirect('recipe_management:add_to_collection', recipe_id=recipe.id)
