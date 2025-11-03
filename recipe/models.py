@@ -70,7 +70,7 @@ class Recipe(TimeStampedModel):
 
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
-        return os.path.join(settings.MEDIA_URL, default_image)
+        return f"{settings.MEDIA_URL}{default_image}"
     
     def get_first_image_url(self):
         latest_image = self.images.all().last()
@@ -80,10 +80,9 @@ class Recipe(TimeStampedModel):
     
     
     def get_second_image_url(self):
-        image = self.images.order_by('created_at')
-
-        if image.count() > 1 and image[1].image:
-            return image[1].image.url
+        images = self.images.order_by('created_at')[:2]
+        if len(images) > 1 and images[1].image:
+            return images[1].image.url
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
@@ -106,7 +105,7 @@ class Recipe(TimeStampedModel):
         return f"{self.total_time} min"
     
     def total_likes(self):
-        return self.liked_by.count()
+        return self.likes
 
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()
