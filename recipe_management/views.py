@@ -1,20 +1,12 @@
-<<<<<<< HEAD
-from django.shortcuts import render, redirect
-=======
 import re
 from django.forms import formset_factory, modelform_factory, modelformset_factory
 from django.shortcuts import get_object_or_404, render, redirect
->>>>>>> 957cbe5 (Start Edit)
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
-<<<<<<< HEAD
-
-=======
->>>>>>> 957cbe5 (Start Edit)
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 
