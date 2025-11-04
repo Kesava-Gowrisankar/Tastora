@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 from django.http import JsonResponse
 from recipe.models import Collection, Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import CollectionForm, IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
@@ -315,3 +315,69 @@ class ToggleCollectionMembershipView(LoginRequiredMixin, View):
             collection.recipes.add(recipe)
 
         return redirect('recipe_management:add_to_collection', recipe_id=recipe.id)
+
+class AllCollectionView(LoginRequiredMixin, ListView):
+    model = Collection
+    template_name = "recipe_management/all_collections.html"
+    context_object_name = "collections"
+
+    def get_queryset(self):
+        # Prefetch recipes for efficiency
+        return Collection.objects.filter(owner=self.request.user).prefetch_related('recipes')
+
+
+class CollectionDetailView(LoginRequiredMixin, View):
+    template_name = "recipe_management/collection_detail.html"
+
+    def get(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        recipes = collection.recipes.prefetch_related('images')
+        form = CollectionForm(instance=collection)
+        return render(request, self.template_name, {
+            'collection': collection,
+            'recipes': recipes,
+            'form': form,
+        })
+
+    def post(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        recipes = collection.recipes.prefetch_related('images')
+        form = CollectionForm(request.POST, instance=collection)
+
+        # Rename collection
+        if "update_name" in request.POST:
+            if form.is_valid():
+                form.save()
+           
+            return redirect('recipe_management:collection_detail', pk=collection.pk)
+
+        # Delete the whole collection
+        elif "delete_collection" in request.POST:
+            collection.delete()
+            return redirect('recipe_management:all_collections')
+
+        # Remove a recipe from the collection
+        elif "remove_recipe" in request.POST:
+            recipe_id = request.POST.get("recipe_id")
+            recipe = get_object_or_404(Recipe, pk=recipe_id)
+            collection.recipes.remove(recipe)
+            return redirect('recipe_management:collection_detail', pk=collection.pk)
+
+        return render(request, self.template_name, {
+            'collection': collection,
+            'recipes': recipes,
+            'form': form,
+        })
+
+class DeleteCollectionView(LoginRequiredMixin, View):
+    template_name = "recipe_management/confirm_delete_collection.html"
+
+    def get(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        return render(request, self.template_name, {'collection': collection})
+
+    def post(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        title = collection.title
+        collection.delete()
+        return redirect('recipe_management:all_collections')

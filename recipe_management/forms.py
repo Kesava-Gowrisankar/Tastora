@@ -64,3 +64,17 @@ class CollectionForm(forms.ModelForm):
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Enter collection name', 'class': 'form-control'})
         }
+
+from django import forms
+from recipe.models import Collection
+
+class CollectionForm(forms.ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'border rounded px-3 py-2',
+                'placeholder': 'Enter collection name'
+            })
+        }
