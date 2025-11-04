@@ -378,6 +378,25 @@ class DeleteCollectionView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         collection = get_object_or_404(Collection, pk=pk, owner=request.user)
-        title = collection.title
         collection.delete()
         return redirect('recipe_management:all_collections')
+    
+class AuthorRecipeListView(LoginRequiredMixin, ListView):
+    model = Recipe
+    template_name = "recipe_management/author_recipes.html"
+    context_object_name = "recipes"
+
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user).order_by('-created_at')
+
+class DeleteRecipeView(LoginRequiredMixin, View):
+    template_name = "recipe_management/confirm_delete_recipe.html"
+
+    def get(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        return render(request, self.template_name, {'recipe': recipe})
+
+    def post(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        recipe.delete()
+        return redirect('recipe_management:author_recipes')
