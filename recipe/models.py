@@ -3,16 +3,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
+from django_extensions.db.models import TimeStampedModel
 import os
-
-
-class TimeStampedModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
-
 
 def user_profile_upload_to(instance, filename):
     return f"{instance.user.id}/profile/{filename}"
@@ -34,31 +26,21 @@ class Profile(TimeStampedModel):
 
 
 class Recipe(TimeStampedModel):
-    class CategoryTypes:
-        VEG = 0
-        VEGAN = 1
-        NON_VEG = 2
-        CHOICES = (
-            (VEG, "Veg"),
-            (VEGAN, "Vegan"),
-            (NON_VEG, "Non-Veg"),
-        )
+    class CategoryTypes(models.IntegerChoices):
+        VEG = 0, "Veg"
+        VEGAN = 1, "Vegan"
+        NON_VEG = 2, "Non-Veg"
 
-    class DifficultyLevels:
-        EASY = 0
-        MEDIUM = 1
-        HARD = 2
-        CHOICES = (
-            (EASY, "Easy"),
-            (MEDIUM, "Medium"),
-            (HARD, "Hard"),
-        )
+    class DifficultyLevels(models.IntegerChoices):
+        EASY = 0, "Easy"
+        MEDIUM = 1, "Medium"
+        HARD = 2, "Hard"
 
     title = models.CharField(max_length=200, db_index=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipes', db_index=True)
-    category = models.PositiveIntegerField(choices=CategoryTypes.CHOICES, default=CategoryTypes.VEG, db_index=True)
+    category = models.PositiveIntegerField(choices=CategoryTypes.choices, default=CategoryTypes.VEG, db_index=True)
     cuisine = models.CharField(max_length=50, db_index=True)
-    difficulty = models.PositiveIntegerField(choices=DifficultyLevels.CHOICES, default=DifficultyLevels.EASY, db_index=True)
+    difficulty = models.PositiveIntegerField(choices=DifficultyLevels.choices, default=DifficultyLevels.EASY, db_index=True)
     servings = models.PositiveIntegerField(default=1, help_text="Number of people the recipe serves")
     prep_time = models.PositiveIntegerField(help_text="Time required to prepare ingredients in minutes")
     total_time = models.PositiveIntegerField(help_text="Preparation time + Cooking Time in minutes",
@@ -87,7 +69,7 @@ class Recipe(TimeStampedModel):
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
-        images = self.images.order_by('-created_at')[2:]
+        images = self.images.order_by('-created')[2:]
         return images if images.exists() else None
 
     def get_absolute_url(self):
@@ -109,13 +91,9 @@ class Recipe(TimeStampedModel):
         return self.liked_by.filter(pk=user.pk).exists()
 
     class Meta:
-        ordering = ("-created_at", "title")
+        ordering = ("-created", "title")
         unique_together = ('title', 'author')
         verbose_name_plural = 'Recipes'
-        indexes = [
-            models.Index(fields=["-created_at"]),
-            models.Index(fields=["likes"]),
-        ]
 
     def __str__(self):
         return self.title
@@ -127,8 +105,8 @@ class Recipe(TimeStampedModel):
            
 
 class RecipeLike(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_like')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_like')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -152,26 +130,18 @@ class Nutrition(models.Model):
 
 
 class Ingredient(models.Model):
-    class UnitTypes:
-        GRAM = 0
-        KILOGRAM = 1
-        TEASPOON = 2
-        TABLESPOON = 3
-        CUP = 4
-        PIECE = 5
-        CHOICES = (
-            (GRAM, "grams"),
-            (KILOGRAM, "kilogram"),
-            (TEASPOON, "teaspoon"),
-            (TABLESPOON, "tablespoon"),
-            (CUP, "cup"),
-            (PIECE, "piece"),
-        )
+    class UnitTypes(models.IntegerChoices):
+        GRAM = 0, "grams"
+        KILOGRAM = 1, "kilogram"
+        TEASPOON = 2, "teaspoon"
+        TABLESPOON = 3, "tablespoon"
+        CUP = 4, "cup"
+        PIECE = 5, "piece"
 
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients')
     name = models.CharField(max_length=100)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.IntegerField(choices=UnitTypes.CHOICES, default=UnitTypes.GRAM)
+    unit = models.IntegerField(choices=UnitTypes.choices, default=UnitTypes.GRAM)
     optional = models.BooleanField(default=False)
 
     def __str__(self):
@@ -184,7 +154,7 @@ class Collection(TimeStampedModel):
     recipes = models.ManyToManyField(Recipe, blank=True)
 
     class Meta:
-        ordering = ('-created_at', 'title')
+        ordering = ('-created', 'title')
         unique_together = ('title', 'owner')
 
     def __str__(self):
@@ -201,7 +171,7 @@ class RecipeImage(TimeStampedModel):
     image = models.ImageField(upload_to=recipe_image_upload_to, default='default-recipe.jpg', blank=True, null=True)
 
     class Meta:
-        ordering = ('-created_at',)
+        ordering = ('-created',)
 
     def __str__(self):
         return f"Image for recipe: {self.recipe.title}"
