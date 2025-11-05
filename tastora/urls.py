@@ -6,7 +6,6 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('recipe.urls')),
-    path('manage/',include('recipe_management.urls')),
 ]
 
 if settings.DEBUG:
