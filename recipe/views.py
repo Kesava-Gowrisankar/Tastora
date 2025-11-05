@@ -5,10 +5,11 @@ from .models import Recipe
 class HomePage(ListView):
     model = Recipe
     template_name = 'home.html'
-
     def get_context_data(self, **kwargs):
-        
         context = super().get_context_data(**kwargs)
-        context['latest_recipes'] = Recipe.objects.order_by('-created_at')[:5]
-        context['popular_recipes'] = Recipe.objects.order_by('-likes')[:5]
+        
+        # Eagerly load related images to prevent N+1 queries in the template.
+        recipes_qs = Recipe.objects.prefetch_related('images')
+        context['latest_recipes'] = recipes_qs.order_by('-created_at')[:5]
+        context['popular_recipes'] = recipes_qs.order_by('-likes')[:5]
         return context
