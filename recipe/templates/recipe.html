@@ -1,8 +1,155 @@
-{%extends 'base.html'%}
+{% extends 'base.html' %}
+{% block content %}
+<div class="w-[90vw] mx-auto mt-8">
 
-{%block content%}
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-{%endblock%}
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold">All <span class="text-orange-500">Recipes</span></h1>
+    <button id="filterBtn"
+            class="bg-gray-100 border px-4 py-2 rounded hover:bg-gray-200 flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+           stroke-width="2" stroke="currentColor" class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M3 4h18M6 8h12M9 12h6m-3 4h0" />
+      </svg>
+      Filter
+    </button>
+  </div>
+
+  <!-- 🧩 Filter Popup -->
+  <div id="filterPopup"
+       class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2
+              bg-white border rounded-xl shadow-2xl p-6 w-[90%] md:w-[700px]
+              z-50 transition-all duration-300 scale-95 opacity-0">
+
+    <h2 class="text-xl font-semibold mb-4 flex justify-between items-center">
+      Filter Recipes
+      <button id="closeFilter"
+              class="text-gray-500 hover:text-red-500 text-3xl leading-none">&times;</button>
+    </h2>
+
+    <form id="filterForm" method="get" class="space-y-5">
+
+      <!-- 🥗 Category -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Category</label>
+        <select name="category" class="border p-2 rounded w-full">
+          <option value="">All</option>
+          {% for val, label in categories %}
+            <option value="{{ val }}" {% if request.GET.category == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- ⚙️ Difficulty -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Difficulty</label>
+        <select name="difficulty" class="border p-2 rounded w-full">
+          <option value="">All</option>
+          {% for val, label in difficulties %}
+            <option value="{{ val }}" {% if request.GET.difficulty == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 🌍 Cuisine -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Cuisine / Country</label>
+        <input type="text" name="cuisine" placeholder="e.g. Italian, Indian..."
+               value="{{ request.GET.cuisine }}" class="border p-2 rounded w-full">
+      </div>
+
+      <!-- 🔄 Sort By -->
+      <div>
+        <label class="block text-gray-700 font-medium mb-1">Sort By</label>
+        <select name="sort_by" class="border p-2 rounded w-full">
+          <option value="">Default</option>
+          <option value="recent" {% if request.GET.sort_by == "recent" %}selected{% endif %}>Most Recent</option>
+          <option value="popular" {% if request.GET.sort_by == "popular" %}selected{% endif %}>Most Popular</option>
+        </select>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex justify-end gap-3 mt-6">
+        <button type="button" id="clearFilter"
+                class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200">Clear Filters</button>
+        <button type="button" id="cancelFilter"
+                class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+        <button type="submit"
+                class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Overlay background -->
+  <div id="filterOverlay" class="hidden fixed inset-0 bg-black/30 z-40 transition-opacity duration-300"></div>
+
+  <!-- 🧁 Recipe Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+    {% for recipe in recipes %}
+      <div class="rounded-xl overflow-hidden shadow-md bg-white transition-transform duration-300 hover:scale-105 relative group">
+        <div class="absolute top-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
+          {{ recipe.get_category_display }}
+        </div>
+        <img src="{{ recipe.get_first_image_url }}" alt="{{ recipe.title }}" class="w-full h-48 object-cover">
+        <div class="p-4">
+          <h3 class="text-lg font-semibold mb-1">{{ recipe.title }}</h3>
+          <p class="text-sm text-gray-500 mb-2">{{ recipe.cuisine }}</p>
+          <div class="flex items-center text-gray-600 text-sm mb-2">
+            <span class="mr-2">⭐ {{ recipe.likes }}</span>
+            <span class="mr-2">⏱ {{ recipe.total_time_display }}</span>
+            <span>👨‍🍳 {{ recipe.servings }}</span>
+          </div>
+          <a href="{{ recipe.get_absolute_url }}"
+             class="block mt-4 bg-orange-500 text-white text-center py-2 rounded hover:bg-orange-600 transition">
+            View Details →
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-center text-gray-500 text-lg col-span-3 mt-6">No recipes found matching your filters.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 🧠 Popup Script -->
+<script>
+  const filterBtn = document.getElementById('filterBtn');
+  const filterPopup = document.getElementById('filterPopup');
+  const closeFilter = document.getElementById('closeFilter');
+  const cancelFilter = document.getElementById('cancelFilter');
+  const clearFilter = document.getElementById('clearFilter');
+  const overlay = document.getElementById('filterOverlay');
+  const filterForm = document.getElementById('filterForm');
+
+  // Show / Hide Popup
+  function togglePopup(show) {
+    if (show) {
+      filterPopup.classList.remove('hidden');
+      overlay.classList.remove('hidden');
+      setTimeout(() => {
+        filterPopup.classList.remove('opacity-0', 'scale-95');
+        filterPopup.classList.add('opacity-100', 'scale-100');
+      }, 10);
+    } else {
+      filterPopup.classList.add('opacity-0', 'scale-95');
+      filterPopup.classList.remove('opacity-100', 'scale-100');
+      setTimeout(() => {
+        filterPopup.classList.add('hidden');
+        overlay.classList.add('hidden');
+      }, 200);
+    }
+  }
+
+  // Clear filters (reset form inputs)
+  clearFilter.addEventListener('click', () => {
+    filterForm.reset();
+  });
+
+  // Button listeners
+  filterBtn.addEventListener('click', () => togglePopup(true));
+  closeFilter.addEventListener('click', () => togglePopup(false));
+  cancelFilter.addEventListener('click', () => togglePopup(false));
+  overlay.addEventListener('click', () => togglePopup(false));
+</script>
+{% endblock %}
