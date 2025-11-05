@@ -46,8 +46,7 @@ class IngredientForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "e.g., Sugar"}),
             "quantity": forms.NumberInput(attrs={"placeholder": "e.g., 100"}),
-            # Use the model's integer based choices to avoid value/type mismatch
-            "unit": forms.Select(choices=Ingredient.UnitTypes.CHOICES),
+            "unit": forms.Select(choices=Ingredient.UnitTypes.choices),
             "optional": forms.CheckboxInput(),
         }
 IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=False)

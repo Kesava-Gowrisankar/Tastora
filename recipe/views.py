@@ -10,7 +10,7 @@ class HomePage(ListView):
         
         # Eagerly load related images to prevent N+1 queries in the template.
         recipes_qs = Recipe.objects.prefetch_related('images')
-        context['latest_recipes'] = recipes_qs.order_by('-created_at')[:5]
+        context['latest_recipes'] = recipes_qs.order_by('-created')[:5]
         context['popular_recipes'] = recipes_qs.order_by('-likes')[:5]
         return context
 
