@@ -18,8 +18,4 @@ class HomePage(ListView):
 class RecipePage(ListView):
     model = Recipe
     template_name='recipe.html'
-
-class RecipeDetailView(DetailView):
-    model = Recipe
-    template_name = 'recipe_detail.html'  
-    context_object_name = 'recipe'  
+  
