@@ -80,17 +80,15 @@ class Recipe(TimeStampedModel):
     
     
     def get_second_image_url(self):
-        images = self.images.order_by('-created_at')[:2]
-        if len(images) > 1 and images[1].image:
-            return images[1].image.url
+        image = self.images.order_by('created_at')
+
+        if image.count() > 1 and image[1].image:
+            return image[1].image.url
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
         images = self.images.order_by('-created_at')[2:]
-
-        if images.count() > 2 and images[2].image:
-            return images[2:]
-        return None
+        return images if images.exists() else None
 
     def get_absolute_url(self):
         return reverse('recipe_management:recipe_detail', kwargs={'pk': self.pk})
