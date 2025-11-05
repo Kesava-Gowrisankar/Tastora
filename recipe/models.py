@@ -66,7 +66,7 @@ class Recipe(TimeStampedModel):
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
     likes = models.PositiveIntegerField(default=0)
-    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes_set', blank=True)
+    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
 
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
