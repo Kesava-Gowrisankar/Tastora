@@ -1,5 +1,7 @@
 # recipe/views.py
-from django.views.generic import ListView, DetailView
+from ast import List
+from string import Template
+from django.views.generic import ListView, DetailView, TemplateView
 from .models import Recipe
 from django.db.models import Q
 
@@ -69,3 +71,7 @@ class RecipeDetailView(DetailView):
     model = Recipe
     template_name = 'recipe_detail.html'
     context_object_name = 'recipe'
+
+class Aboutpage(ListView):
+    template_name = 'about.html'
+    model = Recipe
