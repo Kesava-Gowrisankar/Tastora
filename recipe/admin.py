@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Collection, Ingredient, Nutrition, Recipe, RecipeImage, Profile
+from .models import Collection, Ingredient, Nutrition, Recipe, RecipeImage, Profile, RecipeLike
 
 
 # -----------------------------
@@ -109,3 +109,23 @@ class ProfileAdmin(admin.ModelAdmin):
     ordering = ('-created',)
     list_select_related = ('user',)
     list_filter = ('location',)
+
+@admin.register(RecipeLike)
+class RecipeLikeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'recipe', 'created_at', 'recipe_thumbnail')
+    search_fields = ('user__username', 'recipe__title')
+    list_filter = ('created_at', 'recipe__category', 'recipe__difficulty')
+    ordering = ('-created_at',)
+    autocomplete_fields = ('user', 'recipe')
+    list_select_related = ('user', 'recipe')
+
+    def recipe_thumbnail(self, obj):
+        """Display a small thumbnail of the liked recipe"""
+        image = obj.recipe.images.first()
+        if image and image.image:
+            return format_html(
+                '<img src="{}" width="50" height="50" style="border-radius:5px; object-fit:cover;" />',
+                image.image.url
+            )
+        return "—"
+    recipe_thumbnail.short_description = "Recipe"
