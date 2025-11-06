@@ -18,3 +18,32 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     def get_object(self, queryset=None):
         # Return the profile of the logged-in user
         return Profile.objects.get_or_create(user=self.request.user)[0]
+    
+class LogoutConfirmView(TemplateView):
+    template_name = "logout_confirm.html"
+
+class CustomLoginView(LoginView):
+    template_name = 'login.html'
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        return reverse_lazy('recipe:home')
+
+class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+
+
+class SignupView(CreateView):
+    form_class = CustomUserCreationForm
+    template_name = "signup.html"
+    success_url = reverse_lazy("recipe:home")  # Redirect to home or wherever after login
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Log the user in
+        login(self.request, self.object)
+        return response      
