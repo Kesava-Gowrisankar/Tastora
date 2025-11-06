@@ -16,9 +16,11 @@
         
         {% include "includes/partials/search_bar.html" %}
         {% if user.is_authenticated %}
-        {% include "includes/partials/profile.html" with btn_link="#" %}
+        {%url 'profile' as profile%}
+        {% include "includes/partials/profile.html" with btn_link=profile %}
         {% else %}
-         {% include "includes/partials/navbtn.html" with btn_name="Login" btn_bg="bg-orange-400"%}
+            {%url 'login' as login%}
+         {% include "includes/partials/navbtn.html" with btn_name="Login/SignUp" btn_link=login btn_bg="bg-orange-400"%}
         {% endif %}
 
     </div>
