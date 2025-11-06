@@ -46,10 +46,13 @@ class CustomUserCreationForm(UserCreationForm):
 class SignupView(CreateView):
     form_class = CustomUserCreationForm
     template_name = "signup.html"
-    success_url = reverse_lazy("recipe:home")  # Redirect to home or wherever after login
+    success_url = reverse_lazy("recipe:home")
 
     def form_valid(self, form):
+        # Save user first
         response = super().form_valid(form)
-        # Log the user in
-        login(self.request, self.object)
-        return response      
+
+        # Explicitly provide backend
+        login(self.request, self.object, backend='django.contrib.auth.backends.ModelBackend')
+        return response
+    
