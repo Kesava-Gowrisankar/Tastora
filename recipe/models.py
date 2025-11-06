@@ -62,7 +62,7 @@ class Recipe(TimeStampedModel):
     
     
     def get_second_image_url(self):
-        image = self.images.order_by('created_at')
+        image = self.images.order_by('created')
 
         if image.count() > 1 and image[1].image:
             return image[1].image.url

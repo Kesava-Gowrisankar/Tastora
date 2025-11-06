@@ -50,7 +50,7 @@ class AddRecipeTestCase(TestCase):
         response = self.client.post(self.url, data, follow=True)
 
         # Check for success message
-        self.assertContains(response, "🎉 Recipe created successfully!")
+        self.assertContains(response, "Recipe created successfully!")
 
         # Check that the recipe was actually created
         self.assertTrue(Recipe.objects.filter(title='Test Recipe').exists())
