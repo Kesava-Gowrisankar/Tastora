@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Apps
     'accounts.apps.AccountsConfig',
     'recipe.apps.RecipeConfig',
+    'recipe_management.apps.RecipeManagementConfig',
 
     # Pip
     'widget_tweaks',

@@ -9,3 +9,4 @@ class HomePage(TemplateView):
         context['latest_recipes'] = Recipe.objects.order_by('-created')[:5]
         context['popular_recipes'] = Recipe.objects.order_by('-likes')[:5]
         return context
+
