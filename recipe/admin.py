@@ -10,11 +10,11 @@ from .models import Collection, Ingredient, Nutrition, Recipe, RecipeImage, Prof
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'title', 'author', 'category', 'difficulty',
-        'featured', 'likes', 'created_at', 'thumbnail_preview'
+        'featured', 'likes', 'created', 'thumbnail_preview'
     )
     search_fields = ('title', 'cuisine', 'author__username', 'instructions')
     list_filter = ('category', 'difficulty', 'featured', 'cuisine')
-    ordering = ('-created_at',)
+    ordering = ('-created',)
     readonly_fields = ('likes',)
     autocomplete_fields = ('author',)
     list_select_related = ('author',)
@@ -72,9 +72,9 @@ class NutritionAdmin(admin.ModelAdmin):
 # -----------------------------
 @admin.register(RecipeImage)
 class RecipeImageAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'image_preview', 'created_at')
+    list_display = ('recipe', 'image_preview', 'created')
     search_fields = ('recipe__title',)
-    ordering = ('-created_at',)
+    ordering = ('-created',)
     autocomplete_fields = ('recipe',)
     list_select_related = ('recipe',)
 
@@ -91,9 +91,9 @@ class RecipeImageAdmin(admin.ModelAdmin):
 # -----------------------------
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'owner', 'created_at')
+    list_display = ('title', 'owner', 'created')
     search_fields = ('title', 'owner__username')
-    ordering = ('-created_at',)
+    ordering = ('-created',)
     filter_horizontal = ('recipes',)
     autocomplete_fields = ('owner',)
     list_select_related = ('owner',)
@@ -104,8 +104,8 @@ class CollectionAdmin(admin.ModelAdmin):
 # -----------------------------
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'location', 'created_at')
+    list_display = ('user', 'location', 'created')
     search_fields = ('user__username', 'bio', 'location')
-    ordering = ('-created_at',)
+    ordering = ('-created',)
     list_select_related = ('user',)
     list_filter = ('location',)
