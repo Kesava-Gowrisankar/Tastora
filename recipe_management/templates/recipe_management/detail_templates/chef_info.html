@@ -19,13 +19,13 @@
                 {% endif %}
             </div>
 
-            {% if recipe.updated_at and recipe.updated_at != recipe.created %}
+            {% if recipe.updated and recipe.updated != recipe.created %}
             <div class="text-sm text-orange-100/80 bg-amber-600 px-3 rounded-full">
                 Updated:
-                {% if recipe.updated_at.date == now.date %}
-                    {{ recipe.updated_at|date:"g:i A" }}
+                {% if recipe.updated.date == now.date %}
+                    {{ recipe.updated|date:"g:i A" }}
                 {% else %}
-                    {{ recipe.updated_at|date:"M d, Y" }}
+                    {{ recipe.updated|date:"M d, Y" }}
                 {% endif %}
             </div>
             {% endif %}
