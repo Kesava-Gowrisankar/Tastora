@@ -1,21 +1,17 @@
 from django.contrib.auth.models import User
 
-class Username_or_Email_Login:
+class UsernameOrEmailLogin:
     def authenticate(self, request, username=None, password=None, **kwargs):
-        try:
-            # Try to fetch the user by username
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            try:
-                # If not found by username, try email
-                user = User.objects.get(email=username)
-            except User.DoesNotExist:
-                return None
+        # Try to find user by case-insensitive username first
+        user = User.objects.filter(username__iexact=username).first()
+        if not user:
+            # Fallback: try case-insensitive email
+            user = User.objects.filter(email__iexact=username).first()
 
-        # Check password
-        if user.check_password(password):
+        if user and user.check_password(password):
             return user
         return None
+
     def get_user(self, user_id):
         try:
             return User.objects.get(pk=user_id)
