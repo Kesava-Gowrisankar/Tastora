@@ -40,7 +40,7 @@ class Recipe(TimeStampedModel):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipes', db_index=True)
     category = models.PositiveIntegerField(choices=CategoryTypes.choices, default=CategoryTypes.VEG, db_index=True)
     cuisine = models.CharField(max_length=50, db_index=True)
-    difficulty = models.PositiveIntegerField(choices=DifficultyLevels.choices, default=DifficultyLevels.EASY, db_index=True)
+    difficulty = models.PositiveIntegerField(choices=DifficultyLevels.choices, default=DifficultyLevels.EASY)
     servings = models.PositiveIntegerField(default=1, help_text="Number of people the recipe serves")
     prep_time = models.PositiveIntegerField(help_text="Time required to prepare ingredients in minutes")
     total_time = models.PositiveIntegerField(help_text="Preparation time + Cooking Time in minutes",
@@ -48,7 +48,7 @@ class Recipe(TimeStampedModel):
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
     likes = models.PositiveIntegerField(default=0)
-    likes_user = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
+    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
 
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
@@ -62,7 +62,7 @@ class Recipe(TimeStampedModel):
     
     
     def get_second_image_url(self):
-        image = self.images.order_by('created_at')
+        image = self.images.order_by('created')
 
         if image.count() > 1 and image[1].image:
             return image[1].image.url
@@ -104,14 +104,13 @@ class Recipe(TimeStampedModel):
                 raise ValidationError("Total time cannot be less than prep time.")
            
 
-class RecipeLike(models.Model):
+class RecipeLike(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_like')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_like')
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'recipe')
-        ordering = ['-created_at']
+        ordering = ['-created']
 
     def __str__(self):
         return f"{self.user} liked {self.recipe}"
