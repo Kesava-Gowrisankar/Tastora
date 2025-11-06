@@ -31,10 +31,16 @@ class CustomLoginView(LoginView):
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
-
     class Meta:
         model = User
-        fields = ["username", "email"]
+        fields = ("username", "email")
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "A user with this email address already exists."
+            )
+        return email
 
 
 class SignupView(CreateView):
