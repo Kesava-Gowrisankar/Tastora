@@ -1,0 +1,41 @@
+<div id="recipe-nutrition-card" class="bg-blue-100 p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 mb-8 max-w-sm">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4 pb-2">Nutritional Info</h2>
+    
+    {% if nutrition %}
+        <div class="space-y-3 text-lg font-normal text-gray-700">
+            <!-- Each row displays a nutrient name and its value -->
+            
+            <div class="flex justify-between">
+                <span class="font-normal">Calories</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.calories }}</span>
+            </div>
+            
+            <div class="flex justify-between">
+                <span class="font-normal">Protein</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.protein }}g</span>
+            </div>
+            
+            <div class="flex justify-between">
+                <span class="font-normal">Fat</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.fat }}g</span>
+            </div>
+            
+            <div class="flex justify-between">
+                <span class="font-normal">Fiber</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.fiber }}g</span>
+            </div>
+            
+            <div class="flex justify-between">
+                <span class="font-normal">Sugar</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.sugar }}g</span>
+            </div>
+
+            <div class="flex justify-between">
+                <span class="font-normal">Carbohydrates</span>
+                <span class="font-semibold text-gray-800">{{ nutrition.carbohydrates }}g</span>
+            </div>
+        </div>
+    {% else %}
+        <p class="text-gray-500 italic">Nutritional information is unavailable for this recipe.</p>
+    {% endif %}
+</div>
