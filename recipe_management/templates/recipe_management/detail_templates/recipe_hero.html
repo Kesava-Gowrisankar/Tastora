@@ -1,17 +1,84 @@
 {% load static %}
+
 <div class="w-[90vw] h-[60vh] mx-auto relative mt-4 rounded-lg overflow-hidden mb-4">
-    <img src="{{ image }}" class="absolute w-full h-full object-cover">
-    <div class="absolute bottom-4 left-4 h-48 max-w-lg bg-white/30 backdrop-blur-md hover:bg-white rounded-xl p-8 space-y-2 text-white">
-        <p class="text-gray-500 bg-white/50 inline px-2 py-1 rounded-lg">Let's Cook</p>
-        <div class="bg-white/50  px-2 py-1 rounded-lg text-black space-y-2" >
-            <h1 class="text-4xl"><span class="text-orange-600">{{ recipe.title | capfirst }} </span>Recipe</h1>
-            <h2 class="text-3xl">{{ recipe.cuisine }} Food</h2>
-        </div>
+  <img src="{{ image }}" class="absolute w-full h-full object-cover">
+
+  <div
+    class="absolute bottom-4 left-4 h-48 max-w-lg bg-white/30 backdrop-blur-md hover:bg-white rounded-xl p-8 space-y-2 text-white">
+    <p class="text-gray-500 bg-white/50 inline px-2 py-1 rounded-lg">Let's Cook</p>
+    <div class="bg-white/50 px-2 py-1 rounded-lg text-black space-y-2">
+      <h1 class="text-4xl">
+        <span class="text-orange-600">{{ recipe.title|capfirst }}</span> Recipe
+      </h1>
+      <h2 class="text-3xl">{{ recipe.cuisine }} Food</h2>
     </div>
-   {% if recipe.author == user %}
-    <a href="{% url 'recipe_management:edit_recipe' recipe.id %}" class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2">
-        <i class="bi bi-pencil-square"></i>
-        <span>Edit Recipe</span>
-        </a>
-    {% endif %}
+  </div>
+
+  {% if recipe.author == user %}
+  <!-- Edit button if the logged-in user is the author -->
+  <a href="{% url 'recipe_management:edit_recipe' recipe.id %}"
+    class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2 z-10">
+    <i class="bi bi-pencil-square"></i>
+    <span>Edit Recipe</span>
+  </a>
+
+  {% elif user.is_authenticated %}
+  <!-- Like button for logged-in users -->
+  <div>
+    <div class="absolute top-4 right-4 flex p-1 bg-gray-200 rounded-full z-10">
+    <button class="flex items-center justify-center w-12 h-12 rounded-full" data-recipe-id="{{ recipe.id }}" id="like-btn">
+      <i id="like-icon" class="bi text-2xl {% if liked %}bi-heart-fill text-red-500{% else %}bi-heart{% endif %}"></i>
+    </button>
+  </div>
+  </div>
+  {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const likeBtn = document.getElementById('like-btn');
+  const likeIcon = document.getElementById('like-icon');
+
+  if (likeBtn && likeIcon) {
+    likeBtn.addEventListener('click', function () {
+      const recipeId = likeBtn.getAttribute('data-recipe-id');
+      const url = "{% url 'recipe_management:toggle_like' recipe.id %}";
+
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken'),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Toggle heart icon
+        if (data.liked) {
+          likeIcon.classList.remove('bi-heart');
+          likeIcon.classList.add('bi-heart-fill', 'text-red-500');
+        } else {
+          likeIcon.classList.remove('bi-heart-fill', 'text-red-500');
+          likeIcon.classList.add('bi-heart');
+        }
+      })
+      .catch(err => console.error('Error liking recipe:', err));
+    });
+  }
+});
+</script>
