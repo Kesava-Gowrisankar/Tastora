@@ -40,7 +40,7 @@ INSTALLED_APPS = [
 
     # Apps
     'recipe.apps.RecipeConfig',
-    'accouts.apps.AccountsConfig',
+    'accounts.apps.AccountsConfig',
 
     #Extension
     'django_extensions',
