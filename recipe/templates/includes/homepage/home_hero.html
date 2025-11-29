@@ -1,0 +1,27 @@
+{% load static %}
+
+<div class="home">
+
+    <div class="mx-auto overflow-hidden mt-4 mb-8
+ rounded-md bg-gray-300 flex  relative  h-96 w-[90vw]">
+        <img src="{% static 'HomePage/images/Home1.jpg' %}" alt="Home Image"
+            class="absolute  w-full h-full object-cover scale-x-[-1]" />
+
+        <div class=" absolute top-8 left-8 2xl:top-12 2xl:left-12 w-[30vw]">
+
+            <div class="heading text-5xl font-inter font-semibold space-y-2 mb-4">
+                <h1>Adventure</h1>
+                <h1>of <span class="text-orange-400">Delicacies</span></h1>
+            </div>
+            <p class="font-normal font-open text-gray-500">
+                Unlock a world of variety culinary recipes and unleash your inner chef the easy way with Tastora
+            </p>
+        </div>
+
+        <div class="w-[40vw] absolute bottom-8 left-8 h-10 flex space-x-4">
+
+            {% include 'includes/partials/icon_text_btn.html' with btn_link="#" btn_icon='<i class="bi bi-egg-fried"></i>' btn_text='Explore recipe' btn_bg="bg-black" %}
+            {% include 'includes/partials/icon_text_btn.html' with btn_link="#" btn_icon='<i class="bi bi-download"></i>' btn_text='Get our mobile app' %}
+        </div>
+    </div>
+</div>

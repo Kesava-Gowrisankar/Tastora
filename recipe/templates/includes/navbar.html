@@ -1,0 +1,25 @@
+<nav class="px-2 py-3 flex justify-between items-center">
+    <div>{% include "includes/partials/tastora_logo.html" %}</div>
+    <div class="flex ">
+        {% url 'recipe:home' as home_url %}
+        {% include "includes/partials/navbtn.html" with btn_name="Home" btn_link=home_url%}
+
+        {% include "includes/partials/navbtn.html" with btn_name="About"%}
+
+        {% url 'recipe:recipes' as recipe_url %}
+        {% include "includes/partials/navbtn.html" with btn_name="Recipes" btn_link=recipe_url %}
+
+        {% include "includes/partials/navbtn.html" with btn_name="Contact"%}
+    </div>
+
+    <div class="flex space-x-4 items-center">
+        
+        {% include "includes/partials/search_bar.html" %}
+        {% if user.is_authenticated %}
+        {% include "includes/partials/profile.html" with btn_link="#" %}
+        {% else %}
+         {% include "includes/partials/navbtn.html" with btn_name="Login" btn_bg="bg-orange-400"%}
+        {% endif %}
+
+    </div>
+</nav>

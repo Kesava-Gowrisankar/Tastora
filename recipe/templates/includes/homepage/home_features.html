@@ -1,0 +1,17 @@
+ {%load static%}
+<div class="description  md:w-[80vw] mx-auto flex justify-between mb-8">
+        {% include 'includes/homepage/desc_card.html' with desc_icon='<i class="bi bi-person"></i>' desc_head='User-Centered' desc_content='Your feedback shapes our platform, ensuring a seamless and satisfying culinary journey.' %}
+
+        {% include 'includes/homepage/desc_card.html' with desc_icon='<i class="bi bi-circle-half"></i>' desc_head='Diverse Recipes' desc_content='We celebrate diverse culinary traditions from around the world, inspiring you today.' %}
+
+        {% include 'includes/homepage/desc_card.html' with desc_icon='<i class="bi bi-suit-heart"></i>' desc_head='Fun Community' desc_content='We foster a vibrant foodie community where joy comes with sharing recipes with us.' %}
+
+        <div>
+            {% include 'includes/homepage/img_desc_card.html' with card_img='HomePage/images/Home2.jpg' %}
+
+        {% include 'includes/homepage/icon_text_card.html' with card_icon='<i class="bi bi-x-diamond-fill"></i>' card_text='Learn More'%}
+        </div>
+
+        {% include 'includes/homepage/desc_card.html' with desc_icon='<i class="bi bi-airplane"></i>' desc_head='Explore More' desc_content='Explore more recipe and learn new things only on Tastora, cook more have fun things.' %}
+
+    </div>
