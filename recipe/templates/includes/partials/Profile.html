@@ -1,0 +1,12 @@
+<a href="{{btn_link}}" class="flex items-center justify-center 
+          h-10 w-10 
+          rounded-full 
+          bg-gray-800 text-white 
+          hover:bg-gray-700 
+          transition duration-150 ease-in-out">
+    {% if profile_image_url %}
+    <img src="{{ profile_image_url }}" alt="Profile Image" class="h-full w-full object-cover rounded-full">
+    {% else %}
+    <i class="bi bi-person text-xl"></i>
+    {% endif %}
+</a>

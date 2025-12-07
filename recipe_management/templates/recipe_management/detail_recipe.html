@@ -1,0 +1,41 @@
+{%extends 'base.html'%}
+
+{%block content%}
+
+    <div class="w-[90vw] mx-auto ">
+        {% include 'recipe_management/detail_templates/recipe_hero.html' with image=first_img recipe=recipe %}
+
+        {% include 'recipe_management/detail_templates/recipe_fields.html' with     recipe=recipe %}
+
+        <div class="grid grid-cols-3 gap-x-2 max-h-full  justify-center  p-4">
+            <div class="col-span-2 self-center ">
+                 {% include 'recipe_management/detail_templates/ingredient.html' with ingredient=ingredient %}
+            </div>
+            <div class="">
+                {% include 'recipe_management/detail_templates/nutrition_info.html' with nutrition=nutrition %}
+            </div>
+        </div>
+
+        {% include 'recipe_management/detail_templates/chef_info.html' with recipe=recipe %}
+
+        <div class="grid grid-cols-3   mb-4">
+            <div class="bg-orange-100 w-full rounded-2xl p-2 col-span-2 h-[70vh]">
+
+                <div class="h-full w-full bg-white p-4 space-y-3 overflow-auto rounded-2xl scrollbar-custom">
+                    <h1 class="text-center text-3xl text-amber-500 font-semibold mb-2"><span class="text-black">Cooking </span>Instruction</h1>
+
+                    {% for value in instruction %}
+                        {% include 'recipe_management/detail_templates/instruction_point.html' with number=forloop.counter point=value %}
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="relative m-3 rounded-2xl bg-red-500">
+                <img src="{{recipe.get_second_image_url}}" class="absolute w-full rounded-2xl h-full object-cover ">
+            </div>
+        </div>
+    </div>
+
+{%endblock%}
+
+
+
