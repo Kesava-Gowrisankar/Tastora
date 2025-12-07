@@ -2,7 +2,6 @@
 
 import django.core.validators
 import django.db.models.deletion
-import django_extensions.db.fields
 import recipe.models
 from django.conf import settings
 from django.db import migrations, models
@@ -21,15 +20,14 @@ class Migration(migrations.Migration):
             name='Profile',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created')),
-                ('modified', django_extensions.db.fields.ModificationDateTimeField(auto_now=True, verbose_name='modified')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('profile_picture', models.ImageField(blank=True, default='default.png', null=True, upload_to=recipe.models.user_profile_upload_to)),
                 ('bio', models.CharField(blank=True, max_length=1000)),
                 ('location', models.CharField(blank=True, max_length=100)),
                 ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='profile', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'get_latest_by': 'modified',
                 'abstract': False,
             },
         ),
@@ -37,8 +35,8 @@ class Migration(migrations.Migration):
             name='Recipe',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created')),
-                ('modified', django_extensions.db.fields.ModificationDateTimeField(auto_now=True, verbose_name='modified')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('title', models.CharField(db_index=True, max_length=200)),
                 ('category', models.PositiveIntegerField(choices=[(0, 'Veg'), (1, 'Vegan'), (2, 'Non-Veg')], db_index=True, default=0)),
                 ('cuisine', models.CharField(db_index=True, max_length=50)),
@@ -48,12 +46,12 @@ class Migration(migrations.Migration):
                 ('total_time', models.PositiveIntegerField(help_text='Preparation time + Cooking Time in minutes', validators=[django.core.validators.MaxValueValidator(300), django.core.validators.MinValueValidator(5)])),
                 ('instructions', models.TextField()),
                 ('featured', models.BooleanField(db_index=True, default=False)),
-                ('likes', models.PositiveIntegerField(default=0)),
+                ('likes', models.PositiveIntegerField(db_index=True, default=0)),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipes', to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'verbose_name_plural': 'Recipes',
-                'ordering': ('-created', 'title'),
+                'ordering': ('-created_at', 'title'),
             },
         ),
         migrations.CreateModel(
@@ -81,53 +79,46 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='RecipeImage',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created')),
-                ('modified', django_extensions.db.fields.ModificationDateTimeField(auto_now=True, verbose_name='modified')),
-                ('image', models.ImageField(blank=True, default='default-recipe.jpg', null=True, upload_to=recipe.models.recipe_image_upload_to)),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='images', to='recipe.recipe')),
-            ],
-            options={
-                'ordering': ('-created',),
-            },
-        ),
-        migrations.CreateModel(
-            name='RecipeLike',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipe_like', to='recipe.recipe')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipe_like', to=settings.AUTH_USER_MODEL)),
-            ],
-            options={
-                'ordering': ['-created_at'],
-                'unique_together': {('user', 'recipe')},
-            },
-        ),
-        migrations.AddField(
-            model_name='recipe',
-            name='liked_by',
-            field=models.ManyToManyField(blank=True, related_name='liked_recipes', through='recipe.RecipeLike', to=settings.AUTH_USER_MODEL),
-        ),
-        migrations.CreateModel(
             name='Collection',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created')),
-                ('modified', django_extensions.db.fields.ModificationDateTimeField(auto_now=True, verbose_name='modified')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('title', models.CharField(db_index=True, max_length=200)),
                 ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='collections', to=settings.AUTH_USER_MODEL)),
                 ('recipes', models.ManyToManyField(blank=True, to='recipe.recipe')),
             ],
             options={
-                'ordering': ('-created', 'title'),
-                'unique_together': {('title', 'owner')},
+                'ordering': ('-created_at', 'title'),
             },
+        ),
+        migrations.CreateModel(
+            name='RecipeImage',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('image', models.ImageField(blank=True, default='default-recipe.jpg', null=True, upload_to=recipe.models.recipe_image_upload_to)),
+                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='images', to='recipe.recipe')),
+            ],
+            options={
+                'ordering': ('-created_at',),
+            },
+        ),
+        migrations.AddIndex(
+            model_name='recipe',
+            index=models.Index(fields=['-created_at'], name='recipe_reci_created_48153f_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='recipe',
+            index=models.Index(fields=['likes'], name='recipe_reci_likes_c0ed7c_idx'),
         ),
         migrations.AlterUniqueTogether(
             name='recipe',
             unique_together={('title', 'author')},
+        ),
+        migrations.AlterUniqueTogether(
+            name='collection',
+            unique_together={('title', 'owner')},
         ),
     ]
