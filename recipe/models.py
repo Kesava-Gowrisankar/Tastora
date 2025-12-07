@@ -105,8 +105,8 @@ class Recipe(TimeStampedModel):
            
 
 class RecipeLike(TimeStampedModel):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_like')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_like')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_likes')
 
     class Meta:
         unique_together = ('user', 'recipe')
