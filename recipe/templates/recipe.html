@@ -1,8 +1,87 @@
-{%extends 'base.html'%}
+{% extends 'base.html' %}
 
-{%block content%}
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-<h1>Recipe</h1>
-{%endblock%}
+{% block content %}
+<div class="w-[90vw] mx-auto mt-8">
+
+    <h1 class="text-4xl font-bold text-center mb-6">
+        Glow <span class="text-orange-400">Recipes</span>
+    </h1>
+
+    <!-- Filters -->
+    <form method="get" class="flex flex-wrap gap-4 bg-white p-4 rounded shadow mb-8">
+
+        <select name="category" class="border p-2 rounded">
+            <option value="all">All Types</option>
+            <option value="0">Veg</option>
+            <option value="1">Vegan</option>
+            <option value="2">Non-Veg</option>
+        </select>
+
+        <select name="difficulty" class="border p-2 rounded">
+            <option value="all">All Difficulty</option>
+            <option value="0">Easy</option>
+            <option value="1">Medium</option>
+            <option value="2">Hard</option>
+        </select>
+
+        <input type="text" name="cuisine" placeholder="Cuisine"
+               class="border p-2 rounded" />
+
+        <input type="text" name="search" placeholder="Search"
+               class="border p-2 rounded flex-1" />
+
+        <button class="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500">
+            Filter
+        </button>
+    </form>
+
+    <!-- Recipe Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {% for recipe in recipes %}
+            <a href="{{ recipe.get_absolute_url }}"
+               class="bg-white p-4 rounded shadow hover:shadow-lg transition relative group">
+
+                <img src="{{ recipe.get_first_image_url }}"
+                     class="w-full h-48 object-cover rounded mb-3 glow" />
+
+                <h2 class="text-xl font-semibold group-hover:text-orange-400">
+                    {{ recipe.title|capfirst }}
+                </h2>
+
+                <p class="text-gray-500 text-sm">
+                    {{ recipe.get_category_display }} • {{ recipe.difficulty_display }}
+                </p>
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-8 space-x-3">
+        {% if recipes.has_previous %}
+            <a href="?page={{ recipes.previous_page_number }}"
+               class="px-4 py-2 border rounded">Prev</a>
+        {% endif %}
+
+        <span class="px-4 py-2 bg-orange-400 text-white rounded">
+            Page {{ recipes.number }} of {{ recipes.paginator.num_pages }}
+        </span>
+
+        {% if recipes.has_next %}
+            <a href="?page={{ recipes.next_page_number }}"
+               class="px-4 py-2 border rounded">Next</a>
+        {% endif %}
+    </div>
+
+</div>
+
+<style>
+.glow {
+    box-shadow: 0 0 15px rgba(255, 165, 0, 0.4);
+    transition: box-shadow 0.3s;
+}
+.glow:hover {
+    box-shadow: 0 0 25px rgba(255, 165, 0, 0.8);
+}
+</style>
+
+{% endblock %}
