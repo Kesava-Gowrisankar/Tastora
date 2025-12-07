@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ProfileUpdateView, LogoutConfirmView, CustomLoginView, SignupView
+from .views import ProfileUpdateView
 from django.contrib.auth.views import LogoutView,LoginView
 from django.contrib.auth import views as auth_views
 
