@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='collection',
             name='created',
-            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created'),
+            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, default=1, verbose_name='created'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='profile',
             name='created',
-            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created'),
+            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, default=1, verbose_name='created'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -106,7 +106,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recipe',
             name='created',
-            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created'),
+            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, default=1, verbose_name='created'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -117,7 +117,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='recipeimage',
             name='created',
-            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, verbose_name='created'),
+            field=django_extensions.db.fields.CreationDateTimeField(auto_now_add=True, default=1, verbose_name='created'),
             preserve_default=False,
         ),
         migrations.AddField(
