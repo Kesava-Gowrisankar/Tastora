@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -5,8 +6,10 @@ from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
+from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 # Decorator to require login for CBV methods
 def login_required_method(view):
@@ -130,6 +133,10 @@ class RecipeDetailView(DetailView):
         nutrition = getattr(recipe, 'nutrition', None)
         ingredients = recipe.ingredients.all()
 
+        liked = False
+        if self.request.user.is_authenticated:
+            liked = RecipeLike.objects.filter(user=self.request.user, recipe=recipe).exists()
+
         # Split instructions into lines (assuming instructions are stored as text with line breaks)
         points=recipe.instructions.split('.')
         instruction_list = [point.strip() for point in points if point.strip()]
@@ -138,6 +145,7 @@ class RecipeDetailView(DetailView):
             'nutrition': nutrition,
             'ingredient': ingredients,
             'instruction': instruction_list,
+            'liked': liked, 
         })
         return context
 
@@ -229,3 +237,23 @@ class EditRecipeView(View):
             messages.error(request, "Please correct the errors below.")
 
         return render(request, self.template_name, forms)
+    
+@login_required
+def toggle_like(request, pk):
+    recipe = Recipe.objects.get(pk=pk)
+    user = request.user
+
+    liked = False
+    recipe_like, created = RecipeLike.objects.get_or_create(user=user, recipe=recipe)
+    
+    if not created:
+        # User already liked it, remove like
+        recipe_like.delete()
+    else:
+        liked = True
+
+    data = {
+        'liked': liked,
+        'total_likes': recipe.likes
+    }
+    return JsonResponse(data)
