@@ -5,7 +5,7 @@
     <div class="w-[90vw] mx-auto ">
         {% include 'recipe_management/detail_templates/recipe_hero.html' with image=first_img recipe=recipe %}
 
-        {% include 'recipe_management/detail_templates/recipe_fields.html' with     recipe=recipe %}
+        {% include 'recipe_management/detail_templates/recipe_fields.html' with image=first_img recipe=recipe %}
 
         <div class="grid grid-cols-3 gap-x-2 max-h-full  justify-center  p-4">
             <div class="col-span-2 self-center ">
@@ -33,6 +33,9 @@
                 <img src="{{recipe.get_second_image_url}}" class="absolute w-full rounded-2xl h-full object-cover ">
             </div>
         </div>
+        <div class="mb-8 w-full mx-auto">
+        {% include 'recipe_management/detail_templates/other_images.html' with images=recipe.get_remaining_image %}
+    </div>
     </div>
 
 {%endblock%}

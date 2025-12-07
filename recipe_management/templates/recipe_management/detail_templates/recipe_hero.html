@@ -3,8 +3,7 @@
 <div class="w-[90vw] h-[60vh] mx-auto relative mt-4 rounded-lg overflow-hidden mb-4">
   <img src="{{ image }}" class="absolute w-full h-full object-cover">
 
-  <div
-    class="absolute bottom-4 left-4 h-48 max-w-lg bg-white/30 backdrop-blur-md hover:bg-white rounded-xl p-8 space-y-2 text-white">
+  <div class="absolute bottom-4 left-4 h-48 max-w-lg bg-white/30 backdrop-blur-md hover:bg-white rounded-xl p-8 space-y-2 text-white">
     <p class="text-gray-500 bg-white/50 inline px-2 py-1 rounded-lg">Let's Cook</p>
     <div class="bg-white/50 px-2 py-1 rounded-lg text-black space-y-2">
       <h1 class="text-4xl">
@@ -15,70 +14,86 @@
   </div>
 
   {% if recipe.author == user %}
-  <!-- Edit button if the logged-in user is the author -->
-  <a href="{% url 'recipe_management:edit_recipe' recipe.id %}"
-    class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2 z-10">
-    <i class="bi bi-pencil-square"></i>
-    <span>Edit Recipe</span>
-  </a>
+    <!-- Edit button if the logged-in user is the author -->
+    <a href="{% url 'recipe_management:edit_recipe' recipe.id %}"
+       class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2 z-10">
+      <i class="bi bi-pencil-square"></i>
+      <span>Edit Recipe</span>
+    </a>
 
   {% elif user.is_authenticated %}
-  <!-- Like button for logged-in users -->
-  <div>
-    <div class="absolute top-4 right-4 flex p-1 bg-gray-200 rounded-full z-10">
-    <button class="flex items-center justify-center w-12 h-12 rounded-full" data-recipe-id="{{ recipe.id }}" id="like-btn">
-      <i id="like-icon" class="bi text-2xl {% if liked %}bi-heart-fill text-red-500{% else %}bi-heart{% endif %}"></i>
-    </button>
-  </div>
-  </div>
+    <!-- Like button for logged-in users -->
+    <div class="absolute top-4 right-4 flex bg-gray-50/40 p-4 space-x-2 rounded-xl">
+      <button
+        class="grid grid-cols-3 overflow-hidden w-32 rounded-tl-full rounded-bl-full z-10"
+        data-recipe-id="{{ recipe.id }}" id="like-btn">
+
+        <div id="like-status"
+             class="col-span-2 px-2 py-1 self-center {% if liked %}bg-red-500 text-white{% else %}bg-white{% endif %}">
+          {% if liked %}Liked{% else %}Like{% endif %}
+        </div>
+
+        <div class="bg-black text-white px-3 py-1 self-center" id="like-count">
+          {{ recipe.total_likes }}
+        </div>
+      </button>
+
+      <a href="{% url 'recipe_management:add_to_collection' recipe.id %}" class="bg-white px-2 py-1    rounded-full">
+  <i class="bi bi-bookmarks"></i>
+</a>
+
+    </div>
   {% endif %}
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const likeBtn = document.getElementById('like-btn');
-  const likeIcon = document.getElementById('like-icon');
+  document.addEventListener('DOMContentLoaded', function () {
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) {
+      likeBtn.addEventListener('click', function () {
+        const recipeId = likeBtn.getAttribute('data-recipe-id');
+        const url = "{% url 'recipe_management:toggle_like' recipe.id %}";
 
-  if (likeBtn && likeIcon) {
-    likeBtn.addEventListener('click', function () {
-      const recipeId = likeBtn.getAttribute('data-recipe-id');
-      const url = "{% url 'recipe_management:toggle_like' recipe.id %}";
-
-      function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-          const cookies = document.cookie.split(';');
-          for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-              break;
+        // Helper function to get CSRF token
+        function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+              }
             }
           }
+          return cookieValue;
         }
-        return cookieValue;
-      }
 
-      fetch(url, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getCookie('csrftoken'),
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Toggle heart icon
-        if (data.liked) {
-          likeIcon.classList.remove('bi-heart');
-          likeIcon.classList.add('bi-heart-fill', 'text-red-500');
-        } else {
-          likeIcon.classList.remove('bi-heart-fill', 'text-red-500');
-          likeIcon.classList.add('bi-heart');
-        }
-      })
-      .catch(err => console.error('Error liking recipe:', err));
-    });
-  }
-});
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          const likeCount = document.getElementById('like-count');
+          const likeStatus = document.getElementById('like-status');
+          likeCount.textContent = data.total_likes;
+
+          if (data.liked) {
+            likeStatus.classList.add('bg-red-500', 'text-white');
+            likeStatus.classList.remove('bg-white');
+            likeStatus.textContent = 'Liked';
+          } else {
+            likeStatus.classList.remove('bg-red-500', 'text-white');
+            likeStatus.classList.add('bg-white');
+            likeStatus.textContent = 'Like';
+          }
+        });
+      });
+    }
+  });
 </script>

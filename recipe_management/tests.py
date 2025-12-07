@@ -54,3 +54,4 @@ class AddRecipeTestCase(TestCase):
 
         # Check that the recipe was actually created
         self.assertTrue(Recipe.objects.filter(title='Test Recipe').exists())
+      

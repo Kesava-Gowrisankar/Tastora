@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django import forms
-from recipe.models import Ingredient, Recipe, Nutrition, RecipeImage
+from recipe.models import Ingredient, Recipe, Nutrition, RecipeImage, Collection
 
 class RecipeForm(forms.ModelForm):
     class Meta:
@@ -16,8 +16,13 @@ class RecipeForm(forms.ModelForm):
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
-        if self.user and Recipe.objects.filter(title=title, author=self.user).exists():
-            raise forms.ValidationError("You already have a recipe with this title.")
+        if self.user:
+            qs = Recipe.objects.filter(title=title, author=self.user)
+            # If editing an existing recipe, exclude its own instance from the uniqueness check
+            if getattr(self, 'instance', None) and getattr(self.instance, 'pk', None):
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError("You already have a recipe with this title.")
         return title
 
 class NutritionForm(forms.ModelForm):
@@ -46,7 +51,30 @@ class IngredientForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "e.g., Sugar"}),
             "quantity": forms.NumberInput(attrs={"placeholder": "e.g., 100"}),
+            # Use the model's integer based choices to avoid value/type mismatch
             "unit": forms.Select(choices=Ingredient.UnitTypes.choices),
             "optional": forms.CheckboxInput(),
         }
-IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=False)
+IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)
+
+class CollectionForm(forms.ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Enter collection name', 'class': 'form-control'})
+        }
+
+from django import forms
+from recipe.models import Collection
+
+class CollectionForm(forms.ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'border rounded px-3 py-2',
+                'placeholder': 'Enter collection name'
+            })
+        }

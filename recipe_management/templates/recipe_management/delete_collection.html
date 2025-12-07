@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-md mx-auto mt-10 bg-white p-6 rounded shadow">
+  <h2 class="text-2xl mb-4">Delete Collection</h2>
+  <p>Are you sure you want to delete <strong>{{ collection.title }}</strong>?</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="mt-4 flex justify-between">
+      <a href="{% url 'recipe_management:all_collections' %}" class="bg-gray-400 text-white px-3 py-1 rounded hover:bg-gray-500">Cancel</a>
+      <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,23 +1,20 @@
-from django.db.models.signals import pre_save, pre_delete
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from django.db import models
-from recipe.models import RecipeLike, Recipe
+from recipe.models import RecipeLike
 
-# Before creating a like
-@receiver(pre_save, sender=RecipeLike)
-def before_create_like(sender, instance, **kwargs):
-    if instance.pk is None:  # Only for new likes
-        Recipe.objects.filter(id=instance.recipe.id).update(
-            likes=models.F('likes') + 1
-        )
 
-# Before deleting a like
-@receiver(pre_delete, sender=RecipeLike)
-def before_delete_like(sender, instance, **kwargs):
-    Recipe.objects.filter(id=instance.recipe.id).update(
-        likes=models.Case(
-            models.When(likes__gt=0, then=models.F('likes') - 1),
-            default=0,
-            output_field=models.PositiveIntegerField()
-        )
-    )
+@receiver(post_save, sender=RecipeLike)
+def update_likes_on_create(sender, instance, created, **kwargs):
+    """Increase recipe like count when a user likes."""
+    if created:
+        recipe = instance.recipe
+        recipe.likes = recipe.recipe_likes.count()
+        recipe.save(update_fields=['likes'])
+
+
+@receiver(post_delete, sender=RecipeLike)
+def update_likes_on_delete(sender, instance, **kwargs):
+    """Decrease recipe like count when a user unlikes."""
+    recipe = instance.recipe
+    recipe.likes = recipe.recipe_likes.count()
+    recipe.save(update_fields=['likes'])
