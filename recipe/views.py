@@ -12,4 +12,3 @@ class HomePage(TemplateView):
         context['popular_recipes'] = Recipe.objects.order_by('-likes')[:RECIPES_ON_HOMEPAGE]
         return context  
 
-
