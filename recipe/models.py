@@ -48,7 +48,6 @@ class Recipe(TimeStampedModel):
     instructions = models.TextField()
     featured = models.BooleanField(default=False, db_index=True)
     likes = models.PositiveIntegerField(default=0)
-    likes_user = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
 
     def default_recipe_image_url(self):
         default_image = 'default-recipe.jpg'
@@ -102,19 +101,6 @@ class Recipe(TimeStampedModel):
         if self.prep_time is not None and self.total_time is not None:
             if self.total_time < self.prep_time:
                 raise ValidationError("Total time cannot be less than prep time.")
-           
-
-class RecipeLike(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_like')
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='recipe_like')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('user', 'recipe')
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.user} liked {self.recipe}"
 
 class Nutrition(models.Model):
     recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
