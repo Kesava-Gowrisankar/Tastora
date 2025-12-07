@@ -23,6 +23,14 @@ def recipe_list(request):
     cuisine = request.GET.get("cuisine")
     search = request.GET.get("search")
 
+    search = request.GET.get("search")
+    if search:
+        recipes = recipes.filter(
+            Q(title__icontains=search) |
+            Q(cuisine__icontains=search)
+        )
+
+
     if category and category != "all":
         recipes = recipes.filter(category=category)
 
@@ -39,7 +47,7 @@ def recipe_list(request):
         )
 
     # Pagination — 20 per page
-    paginator = Paginator(recipes.order_by('-created'), 1)
+    paginator = Paginator(recipes.order_by('-created'), 20)
     page = request.GET.get('page')
     recipes_page = paginator.get_page(page)
 
