@@ -1,11 +1,11 @@
 {% load static %}
 
-<div class="popular-recipe mb-8 mx-auto w-[90vw] ">
+<div class="latest-recipe mb-8 mx-auto w-[90vw] ">
   <h1 class="text-5xl mb-6">
     Latest <span class="text-orange-400">recipes</span>
   </h1>
 
-  <div class="flex space-x-4 bg-amber-100 p-4 rounded-3xl flex justify-center">
+    <div class="flex space-x-4 bg-amber-100 p-4 rounded-3xl justify-center">
     
     {% for recipe in latest  %}
     <a href="{{recipe.get_absolute_url}}"> 
