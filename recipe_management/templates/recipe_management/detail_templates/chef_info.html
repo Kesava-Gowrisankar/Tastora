@@ -1,4 +1,3 @@
-{% if recipe.author.profile.bio %}
 <div class="mb-8 space-y-4">
     <h1 class="text-4xl font-sans">About <span class="text-orange-400">Chef</span></h1>
     <div class="w-full h-64 bg-orange-300  grid grid-cols-3 px-8 gap-4 py-4 rounded-lg overflow-hidden">
@@ -12,23 +11,21 @@
 
             <div class="text-sm bg-orange-100/80 text-amber-600 px-3 rounded-full">
                 Created: 
-                {% if recipe.created.date == now.date %}
-                    {{ recipe.created|date:"g:i A" }}
+                {% if recipe.created_at.date == now.date %}
+                    {{ recipe.created_at|date:"g:i A" }}
                 {% else %}
-                    {{ recipe.created|date:"M d, Y" }}
+                    {{ recipe.created_at|date:"M d, Y" }}
                 {% endif %}
             </div>
 
-            {% if recipe.updated and recipe.updated != recipe.created %}
             <div class="text-sm text-orange-100/80 bg-amber-600 px-3 rounded-full">
-                Updated:
-                {% if recipe.updated.date == now.date %}
-                    {{ recipe.updated|date:"g:i A" }}
+                Updated: 
+                {% if recipe.updated_at.date == now.date %}
+                    {{ recipe.updated_at|date:"g:i A" }}
                 {% else %}
-                    {{ recipe.updated|date:"M d, Y" }}
+                    {{ recipe.updated_at|date:"M d, Y" }}
                 {% endif %}
             </div>
-            {% endif %}
         </div>
 
         <div class="text-black/40 relative text-center italic">
@@ -39,4 +36,3 @@
     </div>
 </div>
 </div>
-{% endif %}
