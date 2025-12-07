@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView
 from .models import Recipe
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -57,3 +57,7 @@ def recipe_list(request):
     }
 
     return render(request, "recipe.html", context)
+
+class Aboutpage(ListView):
+    template_name = 'about.html'
+    model = Recipe
