@@ -3,23 +3,26 @@
     <div class="flex ">
         {% url 'recipe:home' as home_url %}
         {% include "includes/partials/navbtn.html" with btn_name="Home" btn_link=home_url%}
-
-        {% include "includes/partials/navbtn.html" with btn_name="About"%}
+        {% url 'recipe:about' as about_url %}
+        {% include "includes/partials/navbtn.html" with btn_name="About" btn_link=about_url %}
 
         {% url 'recipe:recipes' as recipe_url %}
         {% include "includes/partials/navbtn.html" with btn_name="Recipes" btn_link=recipe_url %}
 
-        {% include "includes/partials/navbtn.html" with btn_name="Contact"%}
+        {% url 'recipe:home' as home_url %}
+        {% include "includes/partials/navbtn.html" with btn_name="Contact" btn_link=home_url|add:'#contact' %}
+
+
     </div>
 
     <div class="flex space-x-4 items-center">
         
         {% include "includes/partials/search_bar.html" %}
         {% if user.is_authenticated %}
-        {% url 'profile' as profile %}
+        {%url 'profile' as profile%}
         {% include "includes/partials/profile.html" with btn_link=profile %}
         {% else %}
-            {% url 'login' as login %}
+            {%url 'login' as login%}
          {% include "includes/partials/navbtn.html" with btn_name="Login/SignUp" btn_link=login btn_bg="bg-orange-400"%}
         {% endif %}
 

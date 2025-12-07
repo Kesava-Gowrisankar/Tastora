@@ -1,0 +1,77 @@
+<div class="flex justify-center mb-8">
+  <div id="statsSection" class="bg-white rounded-2xl shadow-2xl p-8 max-w-5xl w-full flex flex-wrap justify-between border border-gray-200">
+    
+    <!-- Stat 1 -->
+    <div class="text-center flex-1 min-w-[200px]">
+      <h2 class="text-2xl font-bold text-orange-500">
+        <span class="count" data-target="1000000">0</span>+
+      </h2>
+      <p class="text-gray-600 text-sm mt-1">Registered Tastora Users</p>
+    </div>
+
+    <!-- Stat 2 -->
+    <div class="text-center flex-1 min-w-[200px]">
+      <h2 class="text-2xl font-bold text-orange-500">
+        <span class="count" data-target="5000">0</span>
+      </h2>
+      <p class="text-gray-600 text-sm mt-1">Verified Chefs in Community</p>
+    </div>
+
+    <!-- Stat 3 -->
+    <div class="text-center flex-1 min-w-[200px]">
+      <h2 class="text-2xl font-bold text-orange-500">
+        <span class="count" data-target="98">0</span>%
+      </h2>
+      <p class="text-gray-600 text-sm mt-1">User Satisfaction Rate</p>
+    </div>
+
+    <!-- Stat 4 -->
+    <div class="text-center flex-1 min-w-[200px]">
+      <h2 class="text-2xl font-bold text-orange-500">
+        <span class="count" data-target="10000">0</span>+
+      </h2>
+      <p class="text-gray-600 text-sm mt-1">Officially Published Recipes</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const counters = document.querySelectorAll('.count');
+  let started = false; // Prevent re-triggering on multiple scrolls
+
+  const animateCounters = () => {
+    counters.forEach(counter => {
+      const target = +counter.getAttribute('data-target');
+      const duration = 2000; // Animation time in ms
+      const stepTime = 20;
+      const increment = target / (duration / stepTime);
+      let current = 0;
+
+      const updateCounter = () => {
+        current += increment;
+        if (current < target) {
+          counter.textContent = Math.floor(current).toLocaleString();
+          setTimeout(updateCounter, stepTime);
+        } else {
+          counter.textContent = target.toLocaleString();
+        }
+      };
+
+      updateCounter();
+    });
+  };
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting && !started) {
+        started = true;
+        animateCounters();
+      }
+    });
+  }, { threshold: 0.3 }); // Trigger when 30% visible
+
+  observer.observe(document.querySelector('#statsSection'));
+});
+</script>

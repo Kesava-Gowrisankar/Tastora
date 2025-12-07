@@ -4,4 +4,5 @@ app_name='recipe'
 urlpatterns=[
     path('home/',views.HomePage.as_view(),name='home'),
     path("recipes/", views.recipe_list, name="recipes"),
+    path('about/', views.Aboutpage.as_view(), name='about'),
 ]
