@@ -112,10 +112,10 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(RecipeLike)
 class RecipeLikeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'recipe', 'created_at', 'recipe_thumbnail')
+    list_display = ('user', 'recipe', 'created', 'recipe_thumbnail')
     search_fields = ('user__username', 'recipe__title')
-    list_filter = ('created_at', 'recipe__category', 'recipe__difficulty')
-    ordering = ('-created_at',)
+    list_filter = ('created', 'recipe__category', 'recipe__difficulty')
+    ordering = ('-created',)
     autocomplete_fields = ('user', 'recipe')
     list_select_related = ('user', 'recipe')
 
