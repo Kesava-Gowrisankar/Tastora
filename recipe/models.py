@@ -4,31 +4,31 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
-import os
 
-class UploadPaths:
-    @staticmethod
-    def recipe_image(instance, filename):
-        return f"recipes/{instance.id}/{filename}"
-
-    @staticmethod
-    def user_profile(instance, filename):
-        return f"{instance.user.id}/profile/{filename}"
 
 class Profile(TimeStampedModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    profile_picture = models.ImageField(upload_to=UploadPaths.user_profile, blank=True, null=True, default='default.png')
+    profile_picture = models.ImageField(upload_to='profile_image_upload', blank=True, null=True, default='default.png')
     bio = models.CharField(max_length=1000, blank=True)
     location = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return str(self.user)
 
+    # Model method for upload path
+    def profile_image_upload(self, filename):
+        return f"{self.user.id}/profile/{filename}"
+
+    # Overwrite the upload_to dynamically
+    def save(self, *args, **kwargs):
+        if self.profile_picture and hasattr(self.profile_picture, 'name'):
+            self.profile_picture.field.upload_to = self.profile_image_upload
+        super().save(*args, **kwargs)
+
     def get_profile_picture_url(self):
         if self.profile_picture and hasattr(self.profile_picture, 'url'):
             return self.profile_picture.url
-        default_image = 'default-recipe.jpg'
-        return f"{settings.MEDIA_URL}{default_image}"
+        return f"{settings.MEDIA_URL}default.png"
 
 
 class Recipe(TimeStampedModel):
@@ -56,22 +56,24 @@ class Recipe(TimeStampedModel):
     likes = models.PositiveIntegerField(default=0)
     liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
 
+    def __str__(self):
+        return self.title
+
+    # Model method for default recipe image
     def default_recipe_image_url(self):
-        default_image = 'default-recipe.jpg'
-        return f"{settings.MEDIA_URL}{default_image}"
-    
+        return f"{settings.MEDIA_URL}default-recipe.jpg"
+
+    # Model methods to get images
     def get_first_image_url(self):
         latest_image = self.images.all().last()
         if latest_image and latest_image.image:
             return latest_image.image.url
         return self.default_recipe_image_url()
-    
-    
-    def get_second_image_url(self):
-        image = self.images.order_by('created')
 
-        if image.count() > 1 and image[1].image:
-            return image[1].image.url
+    def get_second_image_url(self):
+        image_qs = self.images.order_by('created')
+        if image_qs.count() > 1 and image_qs[1].image:
+            return image_qs[1].image.url
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
@@ -84,14 +86,6 @@ class Recipe(TimeStampedModel):
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()
 
-    class Meta:
-        ordering = ("-created", "title")
-        unique_together = ('title', 'author')
-        verbose_name_plural = 'Recipes'
-
-    def __str__(self):
-        return self.title
-           
 
 class RecipeLike(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
@@ -103,6 +97,7 @@ class RecipeLike(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} liked {self.recipe}"
+
 
 class Nutrition(models.Model):
     recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
@@ -148,12 +143,20 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
+
 class RecipeImage(TimeStampedModel):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=UploadPaths.recipe_image, default='default-recipe.jpg', blank=True, null=True)
-
-    class Meta:
-        ordering = ('-created',)
+    image = models.ImageField(upload_to='recipe_image_upload', default='default-recipe.jpg', blank=True, null=True)
 
     def __str__(self):
         return f"Image for recipe: {self.recipe.title}"
+
+    # Model method for upload path
+    def recipe_image_upload(self, filename):
+        return f"recipes/{self.recipe.id}/{filename}"
+
+    # Override save to set dynamic upload path
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'name'):
+            self.image.field.upload_to = self.recipe_image_upload
+        super().save(*args, **kwargs)
