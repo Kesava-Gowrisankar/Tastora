@@ -25,6 +25,16 @@ class Profile(TimeStampedModel):
     def __str__(self):
         return str(self.user)
 
+    # Model method for upload path
+    def profile_image_upload(self, filename):
+        return f"{self.user.id}/profile/{filename}"
+
+    # Overwrite the upload_to dynamically
+    def save(self, *args, **kwargs):
+        if self.profile_picture and hasattr(self.profile_picture, 'name'):
+            self.profile_picture.field.upload_to = self.profile_image_upload
+        super().save(*args, **kwargs)
+
     def get_profile_picture_url(self):
         if self.profile_picture and hasattr(self.profile_picture, 'url'):
             return self.profile_picture.url
@@ -68,6 +78,10 @@ class Recipe(TimeStampedModel):
     def __str__(self):
         return self.title
 
+    def __str__(self):
+        return self.title
+
+    # Model method for default recipe image
     def default_recipe_image_url(self):
         return f"{settings.MEDIA_URL}default-recipe.jpg"
 
@@ -150,6 +164,7 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
+
 class RecipeImage(TimeStampedModel):
     def recipe_image_upload(instance, filename):
         return f"recipes/{instance.recipe.id}/{filename}"
@@ -167,3 +182,13 @@ class RecipeImage(TimeStampedModel):
 
     def __str__(self):
         return f"Image for recipe: {self.recipe.title}"
+
+    # Model method for upload path
+    def recipe_image_upload(self, filename):
+        return f"recipes/{self.recipe.id}/{filename}"
+
+    # Override save to set dynamic upload path
+    def save(self, *args, **kwargs):
+        if self.image and hasattr(self.image, 'name'):
+            self.image.field.upload_to = self.recipe_image_upload
+        super().save(*args, **kwargs)
