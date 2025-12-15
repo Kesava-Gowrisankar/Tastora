@@ -1,23 +1,24 @@
 from django.db import models
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
-import os
-
-class UploadPaths:
-    @staticmethod
-    def recipe_image(instance, filename):
-        return f"recipes/{instance.id}/{filename}"
-
-    @staticmethod
-    def user_profile(instance, filename):
-        return f"{instance.user.id}/profile/{filename}"
 
 class Profile(TimeStampedModel):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    profile_picture = models.ImageField(upload_to=UploadPaths.user_profile, blank=True, null=True, default='default.png')
+    def user_profile_upload(instance, filename):
+        return f"profile/{instance.user.id}/{filename}"
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
+    profile_picture = models.ImageField(
+        upload_to=user_profile_upload,
+        blank=True,
+        null=True,
+        default='default.png'
+    )
     bio = models.CharField(max_length=1000, blank=True)
     location = models.CharField(max_length=100, blank=True)
 
@@ -27,8 +28,7 @@ class Profile(TimeStampedModel):
     def get_profile_picture_url(self):
         if self.profile_picture and hasattr(self.profile_picture, 'url'):
             return self.profile_picture.url
-        default_image = 'default-recipe.jpg'
-        return f"{settings.MEDIA_URL}{default_image}"
+        return f"{settings.MEDIA_URL}default-recipe.jpg"
 
 
 class Recipe(TimeStampedModel):
@@ -47,31 +47,40 @@ class Recipe(TimeStampedModel):
     category = models.PositiveIntegerField(choices=CategoryTypes.choices, default=CategoryTypes.VEG)
     cuisine = models.CharField(max_length=50)
     difficulty = models.PositiveIntegerField(choices=DifficultyLevels.choices, default=DifficultyLevels.EASY)
-    servings = models.PositiveIntegerField(default=1, help_text="Number of people the recipe serves")
-    prep_time = models.PositiveIntegerField(help_text="Time required to prepare ingredients in minutes")
-    total_time = models.PositiveIntegerField(help_text="Preparation time + Cooking Time in minutes",
-                                             validators=[MaxValueValidator(300), MinValueValidator(5)])
+    servings = models.PositiveIntegerField(default=1)
+    prep_time = models.PositiveIntegerField()
+    total_time = models.PositiveIntegerField(validators=[MaxValueValidator(300), MinValueValidator(5)])
     instructions = models.TextField()
     featured = models.BooleanField(default=False)
     likes = models.PositiveIntegerField(default=0)
-    liked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, through='RecipeLike', related_name='liked_recipes', blank=True)
+    liked_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through='RecipeLike',
+        related_name='liked_recipes',
+        blank=True
+    )
+
+    class Meta:
+        ordering = ("-created", "title")
+        unique_together = ('title', 'author')
+        verbose_name_plural = 'Recipes'
+
+    def __str__(self):
+        return self.title
 
     def default_recipe_image_url(self):
-        default_image = 'default-recipe.jpg'
-        return f"{settings.MEDIA_URL}{default_image}"
-    
+        return f"{settings.MEDIA_URL}default-recipe.jpg"
+
     def get_first_image_url(self):
         latest_image = self.images.all().last()
         if latest_image and latest_image.image:
             return latest_image.image.url
         return self.default_recipe_image_url()
-    
-    
-    def get_second_image_url(self):
-        image = self.images.order_by('created')
 
-        if image.count() > 1 and image[1].image:
-            return image[1].image.url
+    def get_second_image_url(self):
+        images = self.images.order_by('created')
+        if images.count() > 1 and images[1].image:
+            return images[1].image.url
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
@@ -84,14 +93,6 @@ class Recipe(TimeStampedModel):
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()
 
-    class Meta:
-        ordering = ("-created", "title")
-        unique_together = ('title', 'author')
-        verbose_name_plural = 'Recipes'
-
-    def __str__(self):
-        return self.title
-           
 
 class RecipeLike(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
@@ -104,14 +105,15 @@ class RecipeLike(TimeStampedModel):
     def __str__(self):
         return f"{self.user} liked {self.recipe}"
 
+
 class Nutrition(models.Model):
     recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
-    calories = models.PositiveIntegerField(help_text="Estimated calories per serving")
-    protein = models.PositiveIntegerField(help_text="Estimated protein per serving")
-    fat = models.PositiveIntegerField(help_text="Estimated fat per serving")
-    sugar = models.PositiveIntegerField(help_text="Estimated sugar per serving")
-    fiber = models.PositiveIntegerField(help_text="Estimated fiber per serving")
-    carbohydrates = models.PositiveIntegerField(help_text="Estimated carbohydrates per serving")
+    calories = models.PositiveIntegerField()
+    protein = models.PositiveIntegerField()
+    fat = models.PositiveIntegerField()
+    sugar = models.PositiveIntegerField()
+    fiber = models.PositiveIntegerField()
+    carbohydrates = models.PositiveIntegerField()
 
     def __str__(self):
         return f'Nutrition of {self.recipe}'
@@ -148,9 +150,18 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
+
 class RecipeImage(TimeStampedModel):
+    def recipe_image_upload(instance, filename):
+        return f"recipes/{instance.recipe.id}/{filename}"
+
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=UploadPaths.recipe_image, default='default-recipe.jpg', blank=True, null=True)
+    image = models.ImageField(
+        upload_to=recipe_image_upload,
+        default='default-recipe.jpg',
+        blank=True,
+        null=True
+    )
 
     class Meta:
         ordering = ('-created',)
