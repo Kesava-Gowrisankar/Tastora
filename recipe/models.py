@@ -150,7 +150,6 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
-
 class RecipeImage(TimeStampedModel):
     def recipe_image_upload(instance, filename):
         return f"recipes/{instance.recipe.id}/{filename}"
