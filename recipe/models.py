@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
+import os
 
 class Profile(TimeStampedModel):
     def user_profile_upload(instance, filename):
@@ -24,16 +25,6 @@ class Profile(TimeStampedModel):
 
     def __str__(self):
         return str(self.user)
-
-    # Model method for upload path
-    def profile_image_upload(self, filename):
-        return f"{self.user.id}/profile/{filename}"
-
-    # Overwrite the upload_to dynamically
-    def save(self, *args, **kwargs):
-        if self.profile_picture and hasattr(self.profile_picture, 'name'):
-            self.profile_picture.field.upload_to = self.profile_image_upload
-        super().save(*args, **kwargs)
 
     def get_profile_picture_url(self):
         if self.profile_picture and hasattr(self.profile_picture, 'url'):
@@ -78,10 +69,6 @@ class Recipe(TimeStampedModel):
     def __str__(self):
         return self.title
 
-    def __str__(self):
-        return self.title
-
-    # Model method for default recipe image
     def default_recipe_image_url(self):
         return f"{settings.MEDIA_URL}default-recipe.jpg"
 
@@ -90,7 +77,8 @@ class Recipe(TimeStampedModel):
         if latest_image and latest_image.image:
             return latest_image.image.url
         return self.default_recipe_image_url()
-
+    
+    
     def get_second_image_url(self):
         images = self.images.order_by('created')
         if images.count() > 1 and images[1].image:
@@ -107,6 +95,14 @@ class Recipe(TimeStampedModel):
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()
 
+    class Meta:
+        ordering = ("-created", "title")
+        unique_together = ('title', 'author')
+        verbose_name_plural = 'Recipes'
+
+    def __str__(self):
+        return self.title
+           
 
 class RecipeLike(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='recipe_likes')
@@ -118,7 +114,6 @@ class RecipeLike(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} liked {self.recipe}"
-
 
 class Nutrition(models.Model):
     recipe = models.OneToOneField(Recipe, on_delete=models.CASCADE, related_name='nutrition')
@@ -164,7 +159,6 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
-
 class RecipeImage(TimeStampedModel):
     def recipe_image_upload(instance, filename):
         return f"recipes/{instance.recipe.id}/{filename}"
@@ -182,13 +176,3 @@ class RecipeImage(TimeStampedModel):
 
     def __str__(self):
         return f"Image for recipe: {self.recipe.title}"
-
-    # Model method for upload path
-    def recipe_image_upload(self, filename):
-        return f"recipes/{self.recipe.id}/{filename}"
-
-    # Override save to set dynamic upload path
-    def save(self, *args, **kwargs):
-        if self.image and hasattr(self.image, 'name'):
-            self.image.field.upload_to = self.recipe_image_upload
-        super().save(*args, **kwargs)
