@@ -6,13 +6,18 @@ from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
 import os
 
-def user_profile_upload_to(instance, filename):
-    return f"{instance.user.id}/profile/{filename}"
+class UploadPaths:
+    @staticmethod
+    def recipe_image(instance, filename):
+        return f"recipes/{instance.id}/{filename}"
 
+    @staticmethod
+    def user_profile(instance, filename):
+        return f"{instance.user.id}/profile/{filename}"
 
 class Profile(TimeStampedModel):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    profile_picture = models.ImageField(upload_to=user_profile_upload_to, blank=True, null=True, default='default.png')
+    profile_picture = models.ImageField(upload_to=UploadPaths.user_profile, blank=True, null=True, default='default.png')
     bio = models.CharField(max_length=1000, blank=True)
     location = models.CharField(max_length=100, blank=True)
 
@@ -22,7 +27,8 @@ class Profile(TimeStampedModel):
     def get_profile_picture_url(self):
         if self.profile_picture and hasattr(self.profile_picture, 'url'):
             return self.profile_picture.url
-        return os.path.join(settings.MEDIA_URL, 'default.png')
+        default_image = 'default-recipe.jpg'
+        return f"{settings.MEDIA_URL}{default_image}"
 
 
 class Recipe(TimeStampedModel):
@@ -74,18 +80,6 @@ class Recipe(TimeStampedModel):
 
     def get_absolute_url(self):
         return reverse('recipe_management:recipe_detail', kwargs={'pk': self.pk})
-    
-    def difficulty_display(self):
-        return {0: 'Easy', 1: 'Medium', 2: 'Hard'}.get(self.difficulty, 'Unknown')
-
-    def prep_time_display(self):
-        return f"{self.prep_time} min"
-
-    def total_time_display(self):
-        return f"{self.total_time} min"
-    
-    def total_likes(self):
-        return self.likes
 
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()
@@ -97,11 +91,6 @@ class Recipe(TimeStampedModel):
 
     def __str__(self):
         return self.title
-
-    def clean(self):
-        if self.prep_time is not None and self.total_time is not None:
-            if self.total_time < self.prep_time:
-                raise ValidationError("Total time cannot be less than prep time.")
            
 
 class RecipeLike(TimeStampedModel):
@@ -159,15 +148,9 @@ class Collection(TimeStampedModel):
     def __str__(self):
         return self.title
 
-
-def recipe_image_upload_to(instance, filename):
-    safe_title = "".join(c if c.isalnum() else "_" for c in instance.recipe.title)
-    return f"{instance.recipe.author.id}/recipe/{safe_title}/{filename}"
-
-
 class RecipeImage(TimeStampedModel):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to=recipe_image_upload_to, default='default-recipe.jpg', blank=True, null=True)
+    image = models.ImageField(upload_to=UploadPaths.recipe_image, default='default-recipe.jpg', blank=True, null=True)
 
     class Meta:
         ordering = ('-created',)
