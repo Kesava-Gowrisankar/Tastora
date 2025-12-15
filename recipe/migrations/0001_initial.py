@@ -3,6 +3,7 @@
 import django.core.validators
 import django.db.models.deletion
 import django_extensions.db.fields
+import recipe.models
 from django.conf import settings
 from django.db import migrations, models
 
@@ -51,8 +52,8 @@ class Migration(migrations.Migration):
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recipes', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                'verbose_name_plural': 'Recipes',
+                'ordering': ('-created', 'title'),
             },
         ),
         migrations.CreateModel(
@@ -89,8 +90,7 @@ class Migration(migrations.Migration):
                 ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='images', to='recipe.recipe')),
             ],
             options={
-                'get_latest_by': 'modified',
-                'abstract': False,
+                'ordering': ('-created',),
             },
         ),
         migrations.CreateModel(
@@ -126,5 +126,9 @@ class Migration(migrations.Migration):
                 'ordering': ('-created', 'title'),
                 'unique_together': {('title', 'owner')},
             },
+        ),
+        migrations.AlterUniqueTogether(
+            name='recipe',
+            unique_together={('title', 'author')},
         ),
     ]
