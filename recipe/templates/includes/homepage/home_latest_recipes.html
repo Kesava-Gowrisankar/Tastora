@@ -1,4 +1,17 @@
-{%load static%}
-<div class="recent-recipe mb-8  mx-auto w-[90vw]">
-    <h1 class="text-5xl">Latest <span class="text-orange-400">recipes</span></h1>
+{% load static %}
+
+<div class="latest-recipe mb-8 mx-auto w-[90vw] ">
+  <h1 class="text-5xl mb-6">
+    Latest <span class="text-orange-400">recipes</span>
+  </h1>
+
+    <div class="flex space-x-4 bg-amber-100 p-4 rounded-3xl justify-center">
+    
+    {% for recipe in latest_recipes  %}
+    <a href="{{recipe.get_absolute_url}}"> 
+      {% include 'includes/about/popular_recipe.html' with card_img=recipe.get_first_image_url card_text2=recipe.title card_icon1='<i class="bi bi-hand-thumbs-up"></i>' card_text1=recipe.liked_by.count detail_link=recipe.get_absolute_url %}
+    </a>
+{% endfor %}
+
+  </div>
 </div>

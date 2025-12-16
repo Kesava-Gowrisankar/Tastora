@@ -1,2 +1,5 @@
 django
 pillow
+django-widget-tweaks
+python-dotenv
+django_extensions
