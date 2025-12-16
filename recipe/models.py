@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
+import os
 
 class Profile(TimeStampedModel):
     def user_profile_upload(instance, filename):
@@ -76,7 +77,8 @@ class Recipe(TimeStampedModel):
         if latest_image and latest_image.image:
             return latest_image.image.url
         return self.default_recipe_image_url()
-
+    
+    
     def get_second_image_url(self):
         images = self.images.order_by('created')
         if images.count() > 1 and images[1].image:
