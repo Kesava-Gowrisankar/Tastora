@@ -1,0 +1,40 @@
+{% load widget_tweaks %}
+
+<div class="relative w-64 h-64 rounded-full overflow-hidden border-4 border-blue-300 shadow-md">
+    <!-- File input -->
+    <input 
+        type="file" 
+        name="{{ profile.name }}" 
+        id="profile-picture-input"
+        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 rounded-full">
+
+    <!-- Image preview -->
+    <img 
+        id="profile-preview"
+        src="{{ profile.value.url|default_if_none:'/media/default.png' }}"
+        class="absolute inset-0 w-full h-full object-cover z-0 rounded-full"
+        alt="Profile Picture">
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('profile-picture-input');
+    const preview = document.getElementById('profile-preview');
+    let objectUrl = null;
+
+    input.addEventListener('change', function(e) {
+        if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+        }
+
+        const file = e.target.files[0];
+        if (!file) {
+            objectUrl = null;
+            return;
+        }
+
+        objectUrl = URL.createObjectURL(file);
+        preview.src = objectUrl;
+    });
+});
+</script>
