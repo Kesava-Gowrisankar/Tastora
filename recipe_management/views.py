@@ -1,6 +1,5 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
-from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -9,25 +8,18 @@ from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
-from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-RECIPES_ON_HOMEPAGE = 5
 
-class HomePage(TemplateView):
-    template_name = 'home.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['latest_recipes'] = Recipe.objects.all()[:RECIPES_ON_HOMEPAGE]
-        context['popular_recipes'] = Recipe.objects.order_by('-likes')[:RECIPES_ON_HOMEPAGE]
-        return context
+# Decorator to require login for CBV methods
+def login_required_method(view):
+    return method_decorator(login_required, name=view)
 
 # Main CreateRecipeView as class-based view
 @method_decorator(login_required, name='dispatch')
 class CreateRecipeView(View):
 
-    template_name = 'recipe/add_recipe.html'
+    template_name = 'recipe_management/add_recipe.html'
 
     def get_forms(self, request):
         # Bind forms and formsets properly
@@ -98,12 +90,10 @@ class CreateRecipeView(View):
                         ingredient.save()
 
                     messages.success(request, "Recipe created successfully!")
-                    return redirect('recipe:create_recipe')
+                    return redirect('recipe_management:create_recipe')
 
-            except Exception:
-                import logging
-                logging.exception("An unexpected error occurred while saving the recipe")
-                messages.error(request, "An unexpected error occurred while saving the recipe. Please try again.")
+            except Exception as e:
+                 messages.error(request, "An unexpected error occurred while saving the recipe. Please try again.")
 
         else:
             messages.error(request, "Please correct the errors below.")
@@ -126,11 +116,12 @@ class AddIngredientFormView(View):
         form.prefix = form.prefix.replace('__prefix__', str(idx))
 
         new_total = idx + 1
-        return render(request, 'recipe/forms/_ingredient_form.html', {'form': form, 'new_total': new_total})
+        return render(request, 'recipe_management/forms/_ingredient_form.html', {'form': form, 'new_total': new_total})
+
 
 class RecipeDetailView(DetailView):
     model = Recipe
-    template_name = 'recipe/detail_recipe.html'
+    template_name = 'recipe_management/detail_recipe.html'
     context_object_name = 'recipe'
 
     def get_context_data(self, **kwargs):
@@ -142,20 +133,25 @@ class RecipeDetailView(DetailView):
         nutrition = getattr(recipe, 'nutrition', None)
         ingredients = recipe.ingredients.all()
 
+        liked = False
+        if self.request.user.is_authenticated:
+            liked = RecipeLike.objects.filter(user=self.request.user, recipe=recipe).exists()
+
         # Split instructions into lines (assuming instructions are stored as text with line breaks)
-        points=recipe.instructions.splitlines()
+        points=recipe.instructions.split('.')
         instruction_list = [point.strip() for point in points if point.strip()]
         context.update({
             'first_img': first_img,
             'nutrition': nutrition,
             'ingredient': ingredients,
             'instruction': instruction_list,
+            'liked': liked, 
         })
         return context
 
 @method_decorator(login_required, name='dispatch')
 class EditRecipeView(View):
-    template_name = 'recipe/edit_recipe.html'
+    template_name = 'recipe_management/edit_recipe.html'
 
     def get_forms(self, request, recipe):
         # Bind forms with instance
@@ -233,46 +229,31 @@ class EditRecipeView(View):
                         ingredient.save()
 
                     messages.success(request, "Recipe updated successfully!")
-                    return redirect('recipe:recipe_detail', pk=recipe.pk)
+                    return redirect('recipe_management:recipe_detail', pk=recipe.pk)
 
             except Exception as e:
-                messages.error(request, f"Error while updating the recipe: {e}")
+               messages.error(request, "An unexpected error occurred while updating the recipe.")
         else:
-            # Provide detailed error messages to help the user see what failed
-            err_msgs = []
-            if not recipe_form.is_valid():
-                err_msgs.append(f"Recipe errors: {recipe_form.errors}")
-            if not nutrition_form.is_valid():
-                err_msgs.append(f"Nutrition errors: {nutrition_form.errors}")
-            if not recipe_image_form.is_valid():
-                err_msgs.append(f"Image errors: {recipe_image_form.errors}")
-            if not ingredient_formset.is_valid():
-                err_msgs.append(f"Ingredient formset errors: {ingredient_formset.errors} {ingredient_formset.non_form_errors()}")
-
-            messages.error(request, "Please correct the errors below. " + " | ".join(err_msgs))
+            messages.error(request, "Please correct the errors below.")
 
         return render(request, self.template_name, forms)
     
-class ToggleLikeView(LoginRequiredMixin, View):
-    """
-    Toggle like/unlike for a recipe via AJAX.
-    Returns JSON with updated like status and count.
-    """
+@login_required
+def toggle_like(request, pk):
+    recipe = Recipe.objects.get(pk=pk)
+    user = request.user
 
-    def post(self, request, pk, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        user = request.user
-        existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
-        if existing_like.exists():
-            # Unlike
-            existing_like.delete()
-            liked = False
-        else:
-            # Like
-            RecipeLike.objects.create(user=user, recipe=recipe)
-            liked = True
+    liked = False
+    recipe_like, created = RecipeLike.objects.get_or_create(user=user, recipe=recipe)
+    
+    if not created:
+        # User already liked it, remove like
+        recipe_like.delete()
+    else:
+        liked = True
 
-        return JsonResponse({
-            'liked': liked,
-            'total_likes': recipe.recipe_likes.count(),
-        })
+    data = {
+        'liked': liked,
+        'total_likes': recipe.likes
+    }
+    return JsonResponse(data)

@@ -7,5 +7,5 @@ urlpatterns=[
     path("add-ingredient-form/", views.AddIngredientFormView.as_view(), name="add_ingredient_form"),
     path('recipe/<int:pk>/', views.RecipeDetailView.as_view(), name='recipe_detail'),
     path('recipe/<int:pk>/edit/', views.EditRecipeView.as_view(), name='edit_recipe'),
-    
+    path('recipe/<int:pk>/toggle-like/', views.ToggleLikeView.as_view(), name='toggle_like'),
 ]
