@@ -9,7 +9,8 @@
     
     {% for recipe in latest_recipes  %}
     <a href="{{recipe.get_absolute_url}}"> 
-      {% include 'includes/about/popular_recipe.html' with card_img=recipe.get_first_image_url card_text2=recipe.title card_icon1_class='bi bi-hand-thumbs-up' card_text1=recipe.liked_by.count detail_link=recipe.get_absolute_url %}    </a>
+      {% include 'includes/about/popular_recipe.html' with card_img=recipe.get_first_image_url card_text2=recipe.title card_icon1='<i class="bi bi-hand-thumbs-up"></i>' card_text1=recipe.liked_by.count detail_link=recipe.get_absolute_url %}
+    </a>
 {% endfor %}
 
   </div>

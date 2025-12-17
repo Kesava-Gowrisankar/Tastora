@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-8">
+
+    <!-- Page Header -->
+    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+        <i class="bi bi-bookmark-plus text-indigo-600"></i>
+        Add "<span class="text-indigo-600">{{ recipe.title }}</span>" to a Collection
+    </h2>
+
+    <!-- Existing Collections -->
+    <h4 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <i class="bi bi-journal-text text-indigo-500"></i>
+        Your Collections
+    </h4>
+
+    {% if collections %}
+        <ul class="space-y-2 mb-6">
+            {% for collection in collections %}
+                {% if collection.id in recipe_collections %}
+                    <!-- Recipe is already in this collection -->
+                    <li class="flex justify-between items-center bg-green-50 hover:bg-green-100 transition rounded-lg px-4 py-3 border border-green-200">
+                        <div class="flex items-center gap-2 text-green-700">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span class="font-medium">{{ collection.title }}</span>
+                        </div>
+                        <a href="{% url 'recipe:toggle_collection_membership' recipe.id collection.id %}"
+                           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-red-600 hover:text-red-800 rounded-lg transition">
+                            <i class="bi bi-x-circle"></i> Remove
+                        </a>
+                    </li>
+                {% else %}
+                    <!-- Recipe not in this collection -->
+                    <li class="flex justify-between items-center bg-gray-50 hover:bg-gray-100 transition rounded-lg px-4 py-3 border border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <i class="bi bi-collection text-indigo-500"></i>
+                            <span class="font-medium text-gray-800">{{ collection.title }}</span>
+                        </div>
+                        <a href="{% url 'recipe:toggle_collection_membership' recipe.id collection.id %}" 
+                           class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition">
+                            <i class="bi bi-plus-circle"></i> Add Here
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="text-gray-500 mb-6 flex items-center gap-2">
+            <i class="bi bi-exclamation-circle text-yellow-500"></i>
+            <span>You have no collections yet.</span>
+        </div>
+    {% endif %}
+
+    <hr class="my-6 border-gray-300">
+
+    <!-- Create New Collection -->
+    <h4 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <i class="bi bi-folder-plus text-indigo-500"></i>
+        Create a New Collection
+    </h4>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+            {{ form.title.errors }}
+            <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Collection Title</label>
+            <input type="text" name="title" id="id_title" maxlength="200"
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                   placeholder="Enter collection name">
+        </div>
+
+        <button type="submit" 
+                class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition">
+            <i class="bi bi-plus-circle-fill"></i> Create and Add
+        </button>
+    </form>
+</div>
+{% endblock %}

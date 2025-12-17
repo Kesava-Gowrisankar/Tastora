@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="w-[90vw] mx-auto mt-8">
+
+  <!-- Rename Form and Delete Collection -->
+  <div class="flex justify-between items-center mb-6">
+    <form method="post" class="flex gap-3 items-center">
+      {% csrf_token %}
+      {{ form.title }}
+      <button type="submit" name="update_name"
+              class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+        Save Name
+      </button>
+    </form>
+
+    <form method="post" onsubmit="return confirm('Delete this collection permanently?');">
+      {% csrf_token %}
+      <button type="submit" name="delete_collection"
+              class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+        Delete Collection
+      </button>
+    </form>
+  </div>
+
+  <h2 class="text-2xl mb-4 font-semibold">Recipes in this Collection</h2>
+
+  {% if recipes %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {% for recipe in recipes %}
+        <div class="relative group border rounded-lg p-4 bg-white shadow-md transition-transform duration-300 ease-in-out transform hover:scale-105">
+
+          <!-- Delete button (hidden by default, top-right) -->
+          <form method="post"
+                class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onsubmit="return confirm('Remove this recipe from collection?');">
+            {% csrf_token %}
+            <input type="hidden" name="recipe_id" value="{{ recipe.pk }}">
+            <button type="submit" name="remove_recipe"
+                    class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:scale-125 transform transition-transform duration-200">
+              ×
+            </button>
+          </form>
+
+          <!-- Recipe Image -->
+          <img src="{{ recipe.get_first_image_url }}" alt="{{ recipe.title }}"
+               class="w-full h-48 object-cover rounded">
+
+          <!-- Recipe Title -->
+          <h3 class="text-xl font-semibold mt-3">{{ recipe.title }}</h3>
+
+          <!-- View Button -->
+          <div class="flex justify-between mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <a href="{% url 'recipe:recipe_detail' recipe.pk %}"
+               class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+              View
+            </a>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Hover effect for scaling down other cards -->
+    <style>
+      .grid:hover .group:not(:hover) {
+        transform: scale(0.95);
+        opacity: 0.6;
+        transition: all 0.3s ease;
+      }
+    </style>
+
+  {% else %}
+    <p class="text-gray-600 italic">No recipes in this collection yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
