@@ -1,4 +1,5 @@
 {% load static %}
+
 <div class="w-[90vw] h-[60vh] mx-auto relative mt-4 rounded-lg overflow-hidden mb-4">
     <img src="{{ image }}" alt="{{ recipe.title }}" class="absolute w-full h-full object-cover">
     <div class="absolute bottom-4 left-4 h-48 max-w-lg bg-white/30 backdrop-blur-md hover:bg-white rounded-xl p-8 space-y-2 text-white">
@@ -8,10 +9,89 @@
             <h2 class="text-3xl">{{ recipe.cuisine }} Food</h2>
         </div>
     </div>
-   {% if recipe.author == user %}
-    <a href="{% url 'recipe:edit_recipe' recipe.id %}" class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2">
-        <i class="bi bi-pencil-square"></i>
-        <span>Edit Recipe</span>
-        </a>
-    {% endif %}
+  </div>
+
+  {% if recipe.author == user %}
+    <!-- Edit button if the logged-in user is the author -->
+    <a href="{% url 'recipe:edit_recipe' recipe.id %}"
+       class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2 z-10">
+      <i class="bi bi-pencil-square"></i>
+      <span>Edit Recipe</span>
+    </a>
+
+  {% elif user.is_authenticated %}
+    <!-- Like button for logged-in users -->
+    <div class="absolute top-4 right-4 flex bg-gray-50/40 p-4 space-x-2 rounded-xl">
+      <button
+        class="grid grid-cols-3 overflow-hidden w-32 rounded-tl-full rounded-bl-full z-10"
+        data-recipe-id="{{ recipe.id }}" id="like-btn">
+
+        <div id="like-status"
+             class="col-span-2 px-2 py-1 self-center {% if liked %}bg-red-500 text-white{% else %}bg-white{% endif %}">
+          {% if liked %}Liked{% else %}Like{% endif %}
+        </div>
+
+        <div class="bg-black text-white px-3 py-1 self-center" id="like-count">
+          {{ recipe.total_likes }}
+        </div>
+      </button>
+
+      <a href="{% url 'recipe:add_to_collection' recipe.id %}" class="bg-white px-2 py-1    rounded-full">
+  <i class="bi bi-bookmarks"></i>
+</a>
+
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) {
+      likeBtn.addEventListener('click', function () {
+        const recipeId = likeBtn.getAttribute('data-recipe-id');
+        const url = "{% url 'recipe:toggle_like' recipe.id %}";
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+              }
+            }
+          }
+          return cookieValue;
+        }
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          const likeCount = document.getElementById('like-count');
+          const likeStatus = document.getElementById('like-status');
+          likeCount.textContent = data.total_likes;
+
+          if (data.liked) {
+            likeStatus.classList.add('bg-red-500', 'text-white');
+            likeStatus.classList.remove('bg-white');
+            likeStatus.textContent = 'Liked';
+          } else {
+            likeStatus.classList.remove('bg-red-500', 'text-white');
+            likeStatus.classList.add('bg-white');
+            likeStatus.textContent = 'Like';
+          }
+        });
+      });
+    }
+  });
+</script>

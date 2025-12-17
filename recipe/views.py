@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
@@ -10,6 +11,8 @@ from django.views.generic import DetailView
 from .domains import create_recipe_with_details, update_recipe_with_details
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
 
