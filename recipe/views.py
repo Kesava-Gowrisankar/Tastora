@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
@@ -6,8 +7,10 @@ from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
+from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
 
@@ -249,3 +252,27 @@ class EditRecipeView(View):
             messages.error(request, "Please correct the errors below. " + " | ".join(err_msgs))
 
         return render(request, self.template_name, forms)
+    
+class ToggleLikeView(LoginRequiredMixin, View):
+    """
+    Toggle like/unlike for a recipe via AJAX.
+    Returns JSON with updated like status and count.
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
+        existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
+        if existing_like.exists():
+            # Unlike
+            existing_like.delete()
+            liked = False
+        else:
+            # Like
+            RecipeLike.objects.create(user=user, recipe=recipe)
+            liked = True
+
+        return JsonResponse({
+            'liked': liked,
+            'total_likes': recipe.recipe_likes.count(),
+        })
