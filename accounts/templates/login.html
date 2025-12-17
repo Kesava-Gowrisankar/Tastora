@@ -1,0 +1,85 @@
+{% extends 'auth_base.html' %}
+
+{% load widget_tweaks %}
+{% block content %}
+
+<div class="w-full max-w-sm bg-white rounded-lg shadow-md p-8">
+        <!-- Logo -->
+        <div class="flex justify-center mb-8 font-sans">
+            <h1 class="text-3xl font-extrabold text-gray-800">
+                TAST<span class="text-orange-400">ORA</span>
+            </h1>
+        </div>
+
+        <!-- Heading -->
+        <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">Sign in</h2>
+
+        <!-- Login form -->
+        <form method="POST" class="space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="bg-red-100 text-red-700 border border-red-300 p-2 rounded-md text-sm">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Username -->
+            <div class="space-y-2">
+                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    Username / Email
+                </label>
+                {{ form.username|add_class:"w-full border border-gray-300 rounded-md px-4 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
+
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm mt-1">
+                        {{ form.username.errors|join:", " }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div class="space-y-2">
+                <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    Password
+                </label>
+                {{ form.password|add_class:"w-full border border-gray-300 rounded-md px-4 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
+
+                {% if form.password.errors %}
+                    <p class="text-red-500 text-sm mt-1">
+                        {{ form.password.errors|join:", " }}
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md font-semibold transition">
+                Sign in
+            </button>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'password_reset' %}" class="text-sm text-gray-500 hover:text-blue-500">Forgot your password?</a>
+            </div>
+        </form>
+
+
+        <!-- Divider -->
+        <div class="border-t mt-6 mb-4"></div>
+
+        <!-- Signup link -->
+        <div class="text-center text-gray-600 text-sm">
+            Don’t have a Tastora account?
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="{% url 'signup' %}" 
+               class="w-full inline-block bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 rounded-md font-semibold border">
+               Create new account
+            </a>
+        </div>
+    </div>
+
+{% endblock %}
