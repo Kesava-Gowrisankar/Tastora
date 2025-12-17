@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django import forms
-from .models import Ingredient, Recipe, Nutrition, RecipeImage
+from .models import Ingredient, Recipe, Nutrition, RecipeImage,Collection
 
 class RecipeForm(forms.ModelForm):
     class Meta:
@@ -62,4 +62,15 @@ class IngredientForm(forms.ModelForm):
             "unit": forms.Select(choices=Ingredient.UnitTypes.choices),
             "optional": forms.CheckboxInput(),
         }
-IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)
+IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=False)
+
+class CollectionForm(forms.ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'border rounded px-3 py-2',
+                'placeholder': 'Enter collection name'
+            })
+        }
