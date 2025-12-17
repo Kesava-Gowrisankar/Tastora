@@ -1,0 +1,23 @@
+{% load widget_tweaks %}
+
+<div class="bg-yellow-600 h-full w-full p-4 rounded-lg grid grid-rows-6 grid-cols-3 gap-4">
+
+  {% for field in recipeform %}
+    <fieldset class="border border-gray-300 rounded-lg 
+      {% if field.name == 'title' %} col-span-3 row-span-1
+      {% elif field.name == 'instructions' %} col-span-3 row-span-3
+      {% else %} col-span-1 row-span-1
+      {% endif %}">
+      
+      <legend class="flex items-center gap-2 text-gray-600 font-light font-semibold px-2">
+        <span class="text-white">{{ field.label }}</span>
+      </legend>
+
+      {{ field|attr:"placeholder:"|attr:field.label|add_class:"block w-full bg-transparent capitalize text-gray-700 w-full h-full px-2 placeholder-orange-300 focus:ring-0 focus:border-transparent outline-none transition duration-200" }}
+
+      {% if field.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ field.errors|join:", " }}</p>
+      {% endif %}
+    </fieldset>
+  {% endfor %}
+</div>
