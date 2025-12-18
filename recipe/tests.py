@@ -2,138 +2,149 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from Tastora.recipe.domains import create_recipe_with_details
 from recipe.models import Recipe, Ingredient, Nutrition, RecipeImage
 import copy
 
-class CreateRecipeViewTestCase(TestCase):
+class CreateRecipeDomainFunctionTestCase(TestCase):
+
     def setUp(self):
-        self.client = Client()
-        self.user = User.objects.create_user(username='testuser', password='password')
-        self.client.login(username='testuser', password='password')
-        self.url = reverse('recipe:create_recipe')
+        self.user = User.objects.create_user(
+            username='domainuser',
+            password='password'
+        )
 
         self.image = SimpleUploadedFile(
-            name='test_image.jpg',
-            content=b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xFF\xFF\xFF\x21\xF9\x04\x01\x00\x00\x00\x00\x2C\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3B',
+            name='domain_test.jpg',
+            content=b'\x47\x49\x46',
             content_type='image/jpeg'
         )
 
-        # Base form data for recipe + nutrition + ingredient formset
-        self.data = {
-            'title': 'Test Recipe',
-            'category': '0',  # Veg
+        self.recipe_data = {
+            'title': 'Domain Recipe',
+            'category': '0',
             'cuisine': 'Italian',
-            'difficulty': '0',  # Easy
+            'difficulty': '0',
             'servings': 2,
             'prep_time': 10,
             'total_time': 20,
-            'instructions': 'Mix ingredients and cook.',
-            'calories': 300,
-            'protein': 10,
-            'fat': 5,
-            'sugar': 8,
-            'fiber': 4,
-            'carbohydrates': 40,
-            'form-TOTAL_FORMS': '2',
-            'form-INITIAL_FORMS': '0',
-            'form-0-name': 'Tomato',
-            'form-0-quantity': '100',
-            'form-0-unit': '0',
-            'form-0-optional': 'on',
-            'form-1-name': 'Cheese',
-            'form-1-quantity': '50',
-            'form-1-unit': '0',
+            'instructions': 'Cook well.',
         }
 
-    def test_create_recipe_success(self):
-        """Test successful creation of recipe with all fields."""
-        data = copy.deepcopy(self.data)
-        data['image'] = self.image
-        response = self.client.post(self.url, data, follow=True)
+        self.nutrition_data = {
+            'calories': 250,
+            'protein': 15,
+            'fat': 10,
+            'sugar': 5,
+            'fiber': 3,
+            'carbohydrates': 30,
+        }
 
-        self.assertContains(response, "Recipe created successfully!")
-        recipe = Recipe.objects.get(title='Test Recipe')
+    def test_domain_creates_recipe_successfully(self):
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={},
+            ingredients_data=[],
+        )
+
+        recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertEqual(recipe.author, self.user)
-        self.assertEqual(recipe.nutrition.calories, 300)
-        self.assertEqual(recipe.ingredients.count(), 2)
-        self.assertTrue(recipe.images.exists())
+        self.assertTrue(Nutrition.objects.filter(recipe=recipe).exists())
 
-    def test_create_recipe_missing_title(self):
-        """Test creation fails when required recipe title is missing."""
-        data = copy.deepcopy(self.data)
-        data.pop('title')
-        response = self.client.post(self.url, data)
-        self.assertContains(response, "Please correct the errors below.")
-        self.assertFalse(Recipe.objects.exists())
+    def test_domain_creates_recipe_with_image(self):
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={'image': self.image},
+            ingredients_data=[],
+        )
 
-    def test_create_recipe_missing_ingredients(self):
-        """Test creation works even if no ingredients are submitted."""
-        data = copy.deepcopy(self.data)
-        data['form-TOTAL_FORMS'] = '0'
-        data['form-INITIAL_FORMS'] = '0'
-        # Remove ingredient fields
-        keys_to_remove = [k for k in data if k.startswith('form-')]
-        for key in keys_to_remove:
-            data.pop(key)
+        recipe = Recipe.objects.get(title='Domain Recipe')
+        self.assertTrue(
+            RecipeImage.objects.filter(recipe=recipe).exists()
+        )
 
-        data['title'] = 'No Ingredient Recipe'
-        response = self.client.post(self.url, data, follow=True)
-        self.assertContains(response, "Recipe created successfully!")
-        recipe = Recipe.objects.get(title='No Ingredient Recipe')
-        self.assertEqual(recipe.ingredients.count(), 0)
+    def test_domain_creates_multiple_ingredients(self):
+        ingredients_data = [
+            {
+                'name': 'Tomato',
+                'quantity': 100,
+                'unit': '0',
+                'optional': False,
+            },
+            {
+                'name': 'Cheese',
+                'quantity': 50,
+                'unit': '0',
+                'optional': True,
+            },
+        ]
 
-    def test_create_recipe_without_image(self):
-        """Test recipe can be created without an image."""
-        data = copy.deepcopy(self.data)
-        data.pop('image', None)
-        data['title'] = 'No Image Recipe'
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={},
+            ingredients_data=ingredients_data,
+        )
 
-        response = self.client.post(self.url, data, follow=True)
-        self.assertContains(response, "Recipe created successfully!")
-        recipe = Recipe.objects.get(title='No Image Recipe')
-        self.assertFalse(recipe.images.exists())
-
-    def test_create_recipe_invalid_ingredient_quantity(self):
-        """Test ingredient quantity invalid (non-numeric) triggers validation error."""
-        data = copy.deepcopy(self.data)
-        data['form-0-quantity'] = 'abc'
-        response = self.client.post(self.url, data)
-        self.assertContains(response, "Please correct the errors below.")
-        self.assertFalse(Recipe.objects.exists())
-
-    def test_create_recipe_unauthorized_access(self):
-        """Test that unauthenticated user is redirected to login."""
-        self.client.logout()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
-
-    def test_create_recipe_partial_nutrition_data(self):
-        """Test creation fails when nutrition data is incomplete."""
-        data = copy.deepcopy(self.data)
-        data.pop('calories')
-        response = self.client.post(self.url, data)
-        self.assertContains(response, "Please correct the errors below.")
-        self.assertFalse(Recipe.objects.exists())
-
-    def test_create_recipe_optional_ingredient_field(self):
-        """Test creation succeeds when optional ingredient checkbox is unchecked."""
-        data = copy.deepcopy(self.data)
-        data['form-0-optional'] = ''  # optional unchecked
-        data['title'] = 'Optional Ingredient Test'
-        response = self.client.post(self.url, data, follow=True)
-        self.assertContains(response, "Recipe created successfully!")
-        recipe = Recipe.objects.get(title='Optional Ingredient Test')
+        recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertEqual(recipe.ingredients.count(), 2)
 
-    def test_create_recipe_multiple_ingredients(self):
-        """Test creation with more than 2 ingredients."""
-        data = copy.deepcopy(self.data)
-        data['form-TOTAL_FORMS'] = '3'
-        data['form-2-name'] = 'Onion'
-        data['form-2-quantity'] = '30'
-        data['form-2-unit'] = '0'
-        response = self.client.post(self.url, data, follow=True)
-        self.assertContains(response, "Recipe created successfully!")
-        recipe = Recipe.objects.get(title='Test Recipe')
-        self.assertEqual(recipe.ingredients.count(), 3)
+    def test_domain_optional_ingredient_defaults_false(self):
+        ingredients_data = [
+            {
+                'name': 'Salt',
+                'quantity': 1,
+                'unit': '0',
+                # optional missing
+            }
+        ]
+
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={},
+            ingredients_data=ingredients_data,
+        )
+
+        ingredient = Ingredient.objects.get(name='Salt')
+        self.assertFalse(ingredient.optional)
+
+    def test_domain_quantity_defaults_to_zero(self):
+        ingredients_data = [
+            {
+                'name': 'Pepper',
+                'quantity': None,
+                'unit': '0',
+                'optional': False,
+            }
+        ]
+
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={},
+            ingredients_data=ingredients_data,
+        )
+
+        ingredient = Ingredient.objects.get(name='Pepper')
+        self.assertEqual(ingredient.quantity, 0)
+
+    def test_domain_creates_nutrition_correctly(self):
+        create_recipe_with_details(
+            user=self.user,
+            recipe_data=self.recipe_data,
+            nutrition_data=self.nutrition_data,
+            image_data={},
+            ingredients_data=[],
+        )
+
+        nutrition = Nutrition.objects.get(recipe__title='Domain Recipe')
+        self.assertEqual(nutrition.calories, 250)
+        self.assertEqual(nutrition.protein, 15)
