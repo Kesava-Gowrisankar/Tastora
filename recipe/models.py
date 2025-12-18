@@ -90,7 +90,7 @@ class Recipe(TimeStampedModel):
         return images if images.exists() else None
 
     def get_absolute_url(self):
-        return reverse('recipe_management:recipe_detail', kwargs={'pk': self.pk})
+        return reverse('recipe:recipe_detail', kwargs={'pk': self.pk})
 
     def is_liked_by_user(self, user):
         return self.liked_by.filter(pk=user.pk).exists()

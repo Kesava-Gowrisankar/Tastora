@@ -6,12 +6,12 @@
          class="absolute inset-0 w-full h-full object-cover scale-x-[-1]" />
 
     <!-- Text Overlay -->
-    <div class="absolute bottom-2 flex items-center px-2 py-1 border-2 border-gray-500 rounded-xl z-10  bg-white text-black space-x-2 mx-2">        {{ card_icon2|safe }}
+        <div class="absolute bottom-2 flex items-center px-2 py-1 border-2 border-gray-500 rounded-xl z-10  bg-white text-black space-x-2 mx-2">        {% if card_icon2_class %}<i class="{{ card_icon2_class }}"></i>{% endif %}
         <p class="font-semibold  font-inter text-sm text-black ">{{ card_text2|capfirst }}</p>
     </div>
 
     <div class="absolute top-4 right-4 rounded-full bg-white border-2 border-red-400 text-red-400 flex space-x-2 items-center px-3 py-1">
-        {{ card_icon1|safe }}
+        {% if card_icon1_class %}<i class="{{ card_icon1_class }}"></i>{% endif %}
         <p class="font-semibold  font-inter text-sm text-black ">{{ card_text1 }}</p>
         </div>
 </a>
