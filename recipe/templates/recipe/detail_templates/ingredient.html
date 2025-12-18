@@ -9,7 +9,7 @@
                 <div class="flex items-center  text-sm text-gray-700">
                     <span class="mr-2 font-medium">
                         <!-- Display quantity and unit. Use .normalize_decimal to clean up trailing zeros if needed. -->
-                        {{ item.quantity }} 
+                        {{ item.quantity|floatformat:"-2" }} 
                         {{ item.get_unit_display }}
                     </span>
                     <span class="font-normal capitalize">
