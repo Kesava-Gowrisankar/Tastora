@@ -1,0 +1,38 @@
+<div class="mb-8 space-y-4">
+    <h1 class="text-4xl font-sans">About <span class="text-orange-400">Chef</span></h1>
+    <div class="w-full h-64 bg-orange-300  grid grid-cols-3 px-8 gap-4 py-4 rounded-lg overflow-hidden">
+    <div class="overflow-hidden rounded-lg">
+        <img src="{{ recipe.author.profile.get_profile_picture_url }}">
+    </div>
+    <div class="col-span-2 p-8 text-sm bg-orange-100/20 rounded-lg flex flex-col justify-evenly gap-4">
+
+        <div class="text-2xl  flex text-bold space-x-2  items-center font-medium ">
+            <h1 class=" font-sans bg-white py-1 px-4 rounded-full text-amber-600"><span class="text-black">{{ recipe.author.username | capfirst }}'s</span> Kitchen</h1>
+
+            <div class="text-sm bg-orange-100/80 text-amber-600 px-3 rounded-full">
+                Created: 
+                {% if recipe.created.date == now.date %}
+                    {{ recipe.created|date:"g:i A" }}
+                {% else %}
+                    {{ recipe.created|date:"M d, Y" }}
+                {% endif %}
+            </div>
+
+            <div class="text-sm text-orange-100/80 bg-amber-600 px-3 rounded-full">
+                Updated: 
+                {% if recipe.modified.date == now.date %}
+                    {{ recipe.modified|date:"g:i A" }}
+                {% else %}
+                    {{ recipe.modified|date:"M d, Y" }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="text-black/40 relative text-center italic">
+            {{recipe.author.profile.bio}}
+            <i class="bi bi-quote text-3xl absolute -top-6 -left-6"></i>
+            <i class="bi bi-quote text-3xl absolute -bottom-6 -right-6 scale-x-[-1]"></i>
+        </div>
+    </div>
+</div>
+</div>
