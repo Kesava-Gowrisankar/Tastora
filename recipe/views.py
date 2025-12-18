@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
+from .domains import create_recipe_with_details
 
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
@@ -19,93 +20,60 @@ class HomePage(TemplateView):
         context['latest_recipes'] = Recipe.objects.all()[:RECIPES_ON_HOMEPAGE]
         context['popular_recipes'] = Recipe.objects.order_by('-likes')[:RECIPES_ON_HOMEPAGE]
         return context
+    
 
-# Main CreateRecipeView as class-based view
 @method_decorator(login_required, name='dispatch')
 class CreateRecipeView(View):
-
     template_name = 'recipe/add_recipe.html'
 
-    def get_forms(self, request):
-        # Bind forms and formsets properly
-        recipe_form = RecipeForm(request.POST or None, request.FILES or None, user=request.user)
-        nutrition_form = NutritionForm(request.POST or None)
-        recipe_image_form = RecipeImageForm(request.POST or None, request.FILES or None)
-        ingredient_formset = IngredientFormSetClass(
-            request.POST or None,
-            request.FILES or None,
-            queryset=Ingredient.objects.none()
-        )
-        return {
-            'recipeform': recipe_form,
-            'nutritionform': nutrition_form,
-            'recipe_image': recipe_image_form,
-            'ingredient_formset': ingredient_formset,
-        }
+    def forms_are_valid(self, forms):
+        """Check that all forms are valid."""
+        return all(form.is_valid() for form in forms.values())
 
     def get(self, request, *args, **kwargs):
-        forms = self.get_forms(request)
-        return render(request, self.template_name, forms)
+        """Render the empty forms."""
+        return render(request, self.template_name, self.get_forms(request))
 
     def post(self, request, *args, **kwargs):
+        """Process submitted forms.""" 
         forms = self.get_forms(request)
-        recipe_form = forms['recipeform']
-        nutrition_form = forms['nutritionform']
-        recipe_image_form = forms['recipe_image']
-        ingredient_formset = forms['ingredient_formset']
 
-        if (recipe_form.is_valid() and
-            nutrition_form.is_valid() and
-            recipe_image_form.is_valid() and
-            ingredient_formset.is_valid()):
-
-            try:
-                with transaction.atomic():
-                    # Save Recipe
-                    recipe = recipe_form.save(commit=False)
-                    recipe.author = request.user
-                    recipe.save()
-
-                    # Save Nutrition (OneToOne)
-                    nutrition = nutrition_form.save(commit=False)
-                    nutrition.recipe = recipe
-                    nutrition.save()
-
-                    # Save Image (ForeignKey)
-                    if recipe_image_form.cleaned_data.get('image'):
-                        image = recipe_image_form.save(commit=False)
-                        image.recipe = recipe
-                        image.save()
-
-                    # Save Ingredients
-                    for form in ingredient_formset:
-                        if form.cleaned_data.get('DELETE'):
-                            continue
-                        name = form.cleaned_data.get('name')
-                        if not name:
-                            continue
-
-                        ingredient = Ingredient(
-                            recipe=recipe,
-                            name=name,
-                            quantity=form.cleaned_data.get('quantity') or 0,
-                            unit=form.cleaned_data.get('unit'),
-                            optional=form.cleaned_data.get('optional', False)
-                        )
-                        ingredient.save()
-
-                    messages.success(request, "Recipe created successfully!")
-                    return redirect('recipe:create_recipe')
-
-            except Exception:
-                import logging
-                logging.exception("An unexpected error occurred while saving the recipe")
-                messages.error(request, "An unexpected error occurred while saving the recipe. Please try again.")
-
-        else:
+        if not self.forms_are_valid(forms):
             messages.error(request, "Please correct the errors below.")
+            return render(request, self.template_name, forms)
 
-        return render(request, self.template_name, forms)
+        recipe_data = forms['recipeform'].cleaned_data
+        nutrition_data = forms['nutritionform'].cleaned_data
+        image_data = forms['recipe_image'].cleaned_data
+        ingredients_data = [f.cleaned_data for f in forms['ingredient_formset'] if f.cleaned_data]
+
+        create_recipe_with_details(
+            user=request.user,
+            recipe_data=recipe_data,
+            nutrition_data=nutrition_data,
+            image_data=image_data,
+            ingredients_data=ingredients_data
+        )
+
+        messages.success(request, "Recipe created successfully!")
+        return redirect('recipe:create_recipe')
+        
+    def get_forms(self, request):
+        """Return all forms and formsets."""
+        return {
+            'recipeform': RecipeForm(request.POST or None, request.FILES or None, user=request.user),
+            'nutritionform': NutritionForm(request.POST or None),
+            'recipe_image': RecipeImageForm(request.POST or None, request.FILES or None),
+            'ingredient_formset': IngredientFormSetClass(
+                request.POST or None,
+                request.FILES or None,
+                queryset=Ingredient.objects.none()
+            ),
+        }
+
+    def forms_are_valid(self, forms):
+        """Check that all forms are valid."""
+        return all(form.is_valid() for form in forms.values())
 
 
 # Separate class-based view for adding a new ingredient form via HTMX/ajax
