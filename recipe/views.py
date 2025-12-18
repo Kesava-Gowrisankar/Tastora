@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import DetailView
 
 from .domains import create_recipe_with_details, update_recipe_with_details
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
+from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
