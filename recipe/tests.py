@@ -226,14 +226,16 @@ class RecipeDetailViewTestCase(TestCase):
 
     def test_context_contains_ingredients(self):
         response = self.client.get(self.url)
-        ingredients = response.context['ingredient']
+        response = self.client.get(self.url)
+        ingredients = response.context['ingredients']
         self.assertIn(self.ingredient1, ingredients)
         self.assertIn(self.ingredient2, ingredients)
         self.assertEqual(ingredients.count(), 2)
 
     def test_instructions_split_into_list(self):
         response = self.client.get(self.url)
-        instructions = response.context['instruction']
+        response = self.client.get(self.url)
+        instructions = response.context['instructions']
         # Should split by '.' and remove empty strings
         expected = ['Step 1', 'Step 2', 'Step 3']
         self.assertEqual(instructions, expected)
@@ -305,5 +307,5 @@ class RecipeDetailViewTestCase(TestCase):
             author=self.user
         )
         url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_empty_instr.pk})
-        response = self.client.get(url)
-        self.assertEqual(response.context['instruction'], [])
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['instructions'], [])
