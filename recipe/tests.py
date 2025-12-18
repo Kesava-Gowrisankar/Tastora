@@ -148,3 +148,162 @@ class CreateRecipeDomainFunctionTestCase(TestCase):
         nutrition = Nutrition.objects.get(recipe__title='Domain Recipe')
         self.assertEqual(nutrition.calories, 250)
         self.assertEqual(nutrition.protein, 15)
+
+class RecipeDetailViewTestCase(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username='detailuser', password='password')
+        self.recipe = Recipe.objects.create(
+            title='Detail Recipe',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=2,
+            prep_time=10,
+            total_time=20,
+            instructions='Step 1. Step 2. Step 3.',
+            author=self.user
+        )
+        # Add nutrition
+        self.nutrition = Nutrition.objects.create(
+            recipe=self.recipe,
+            calories=200,
+            protein=10,
+            fat=5,
+            sugar=8,
+            fiber=3,
+            carbohydrates=30
+        )
+
+        # Add ingredients
+        self.ingredient1 = Ingredient.objects.create(
+            recipe=self.recipe,
+            name='Tomato',
+            quantity=100,
+            unit='0',
+            optional=False
+        )
+        self.ingredient2 = Ingredient.objects.create(
+            recipe=self.recipe,
+            name='Cheese',
+            quantity=50,
+            unit='0',
+            optional=True
+        )
+
+        # Add image
+        self.image = RecipeImage.objects.create(
+            recipe=self.recipe,
+            image=SimpleUploadedFile(
+                name='test.jpg',
+                content=b'\x47\x49\x46',
+                content_type='image/jpeg'
+            )
+        )
+
+        self.url = reverse('recipe:recipe_detail', kwargs={'pk': self.recipe.pk})
+
+    def test_detail_view_status_code(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_detail_view_template_used(self):
+        response = self.client.get(self.url)
+        self.assertTemplateUsed(response, 'recipe/detail_recipe.html')
+
+    def test_context_contains_recipe(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['recipe'], self.recipe)
+
+    def test_context_contains_first_image(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['first_img'], self.recipe.get_first_image_url())
+
+    def test_context_contains_nutrition(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context['nutrition'], self.nutrition)
+
+    def test_context_contains_ingredients(self):
+        response = self.client.get(self.url)
+        ingredients = response.context['ingredient']
+        self.assertIn(self.ingredient1, ingredients)
+        self.assertIn(self.ingredient2, ingredients)
+        self.assertEqual(ingredients.count(), 2)
+
+    def test_instructions_split_into_list(self):
+        response = self.client.get(self.url)
+        instructions = response.context['instruction']
+        # Should split by '.' and remove empty strings
+        expected = ['Step 1', 'Step 2', 'Step 3']
+        self.assertEqual(instructions, expected)
+
+    def test_recipe_without_nutrition(self):
+        recipe_no_nutrition = Recipe.objects.create(
+            title='No Nutrition',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=1,
+            prep_time=5,
+            total_time=10,
+            instructions='Do something.',
+            author=self.user
+        )
+        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_nutrition.pk})
+        response = self.client.get(url)
+        self.assertIsNone(response.context['nutrition'])
+
+    def test_recipe_without_ingredients(self):
+        recipe_no_ingredients = Recipe.objects.create(
+            title='No Ingredients',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=1,
+            prep_time=5,
+            total_time=10,
+            instructions='Do something.',
+            author=self.user
+        )
+        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_ingredients.pk})
+        response = self.client.get(url)
+        self.assertEqual(list(response.context['ingredient']), [])
+
+    def test_recipe_without_images(self):
+        recipe_no_image = Recipe.objects.create(
+            title='No Image',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=1,
+            prep_time=5,
+            total_time=10,
+            instructions='Do something.',
+            author=self.user
+        )
+        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_image.pk})
+        response = self.client.get(url)
+        self.assertIsNone(response.context['first_img'])
+
+    def test_unauthenticated_user_can_access(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        # Detail view is accessible without login
+        self.assertEqual(response.status_code, 200)
+
+    def test_instructions_empty_string(self):
+        recipe_empty_instr = Recipe.objects.create(
+            title='Empty Instructions',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=1,
+            prep_time=5,
+            total_time=10,
+            instructions='',
+            author=self.user
+        )
+        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_empty_instr.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.context['instruction'], [])
