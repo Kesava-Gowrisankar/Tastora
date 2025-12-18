@@ -108,7 +108,7 @@ class RecipeDetailView(DetailView):
         ingredients = recipe.ingredients.all()
 
         # Split instructions into lines (assuming instructions are stored as text with line breaks)
-        points=recipe.instructions.splitlines()
+        points=recipe.instructions.split(".")
         instruction_list = [point.strip() for point in points if point.strip()]
         context.update({
             'first_img': first_img,
