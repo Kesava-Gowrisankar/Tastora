@@ -9,8 +9,7 @@
         </div>
     </div>
    {% if recipe.author == user %}
-    <a href="#" class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2">
-        <i class="bi bi-pencil-square"></i>
+    <a href="{% url 'recipe:update_recipe' pk=recipe.pk %}" class="absolute top-4 right-4 bg-white/50 hover:bg-white text-black px-3 py-2 rounded-lg flex items-center space-x-2">        <i class="bi bi-pencil-square"></i>
         <span>Edit Recipe</span>
         </a>
     {% endif %}
