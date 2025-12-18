@@ -92,3 +92,28 @@ class AddIngredientFormView(View):
 
         new_total = idx + 1
         return render(request, 'recipe/forms/_ingredient_form.html', {'form': form, 'new_total': new_total})
+
+class RecipeDetailView(DetailView):
+    model = Recipe
+    template_name = 'recipe/detail_recipe.html'
+    context_object_name = 'recipe'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        recipe = self.get_object()
+
+        # Get first and second image safely
+        first_img = recipe.get_first_image_url()
+        nutrition = getattr(recipe, 'nutrition', None)
+        ingredients = recipe.ingredients.all()
+
+        # Split instructions into lines (assuming instructions are stored as text with line breaks)
+        points=recipe.instructions.splitlines()
+        instruction_list = [point.strip() for point in points if point.strip()]
+        context.update({
+            'first_img': first_img,
+            'nutrition': nutrition,
+            'ingredient': ingredients,
+            'instruction': instruction_list,
+        })
+        return context
