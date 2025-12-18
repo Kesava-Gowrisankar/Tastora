@@ -2,7 +2,7 @@
     <h1 class="text-4xl font-sans">About <span class="text-orange-400">Chef</span></h1>
     <div class="w-full h-64 bg-orange-300  grid grid-cols-3 px-8 gap-4 py-4 rounded-lg overflow-hidden">
     <div class="overflow-hidden rounded-lg">
-        <img src="{{ recipe.author.profile.get_profile_picture_url }}">
+                <img src="{{ recipe.author.profile.get_profile_picture_url }}" alt="{{ recipe.author.username }}'s profile picture">
     </div>
     <div class="col-span-2 p-8 text-sm bg-orange-100/20 rounded-lg flex flex-col justify-evenly gap-4">
 
