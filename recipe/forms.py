@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django import forms
-from recipe.models import Ingredient, Recipe, Nutrition, RecipeImage
+from .models import Ingredient, Recipe, Nutrition, RecipeImage
 
 class RecipeForm(forms.ModelForm):
     class Meta:
