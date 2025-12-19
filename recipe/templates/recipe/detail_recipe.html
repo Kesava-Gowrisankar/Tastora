@@ -17,7 +17,7 @@
     <div class="w-[90vw] mx-auto ">
         {% include 'recipe/detail_templates/recipe_hero.html' with image=first_img recipe=recipe %}
 
-        {% include 'recipe/detail_templates/recipe_fields.html' with     recipe=recipe %}
+        {% include 'recipe/detail_templates/recipe_fields.html' with image=first_img recipe=recipe %}
 
         <div class="grid grid-cols-3 gap-x-2 max-h-full  justify-center  p-4">
             <div class="col-span-2 self-center ">
@@ -34,7 +34,7 @@
             <div class="bg-orange-100 w-full rounded-2xl p-2 col-span-2 h-[70vh]">
 
                 <div class="h-full w-full bg-white p-4 space-y-3 overflow-auto rounded-2xl scrollbar-custom">
-                                        <h2 class="text-center text-3xl text-amber-500 font-semibold mb-2"><span class="text-black">Cooking </span>Instruction</h2>
+                    <h1 class="text-center text-3xl text-amber-500 font-semibold mb-2"><span class="text-black">Cooking </span>Instruction</h1>
 
                     {% for value in instruction %}
                         {% include 'recipe/detail_templates/instruction_point.html' with number=forloop.counter point=value %}
@@ -42,9 +42,12 @@
                 </div>
             </div>
             <div class="relative m-3 rounded-2xl bg-red-500">
-                                <img src="{{recipe.get_second_image_url}}" alt="Additional view of {{ recipe.title }}" class="absolute w-full rounded-2xl h-full object-cover ">
+                <img src="{{recipe.get_second_image_url}}" class="absolute w-full rounded-2xl h-full object-cover ">
             </div>
         </div>
+        <div class="mb-8 w-full mx-auto">
+        {% include 'recipe/detail_templates/other_images.html' with images=recipe.get_remaining_image %}
+    </div>
     </div>
 
 {%endblock%}

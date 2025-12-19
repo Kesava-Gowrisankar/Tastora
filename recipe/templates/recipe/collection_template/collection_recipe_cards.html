@@ -1,0 +1,12 @@
+{% load static %}
+
+<div class="popular-recipe mx-auto w-[90vw]">
+  <div class="flex space-x-4 bg-orange-100 p-4 rounded-3xl flex justify-center">
+    {% for recipe in recipes %}
+  {% include 'includes/about/popular_recipe.html' with card_img=recipe.get_first_image_url card_text2=recipe.title card_icon1='<i class="bi bi-hand-thumbs-up"></i>' card_text1=recipe.likes detail_link=recipe.get_absolute_url %}
+    {% empty %}
+    <h1>Empty Collection</h1>
+  {% endfor %}
+
+  </div>
+</div>
