@@ -121,7 +121,6 @@ class RecipeDetailView(DetailView):
             'liked': liked,
             'now': timezone.now()
         })
-
         return context
 
 @method_decorator(login_required, name='dispatch')
