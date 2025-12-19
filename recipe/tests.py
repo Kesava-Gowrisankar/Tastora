@@ -496,3 +496,104 @@ class UpdateRecipeDomainFunctionTestCase(TestCase):
 
         ingredient = Ingredient.objects.get(name='Onion')
         self.assertFalse(ingredient.optional)
+
+class ToggleLikeViewTestCase(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+        # Create user
+        self.user = User.objects.create_user(
+            username='likeuser',
+            password='password'
+        )
+
+        # Create recipe
+        self.recipe = Recipe.objects.create(
+            title='Like Test Recipe',
+            category='0',
+            cuisine='Italian',
+            difficulty='0',
+            servings=2,
+            prep_time=10,
+            total_time=20,
+            instructions='Test steps.',
+            author=self.user
+        )
+
+        self.url = reverse(
+            'recipe:toggle_like',
+            kwargs={'pk': self.recipe.pk}
+        )
+
+    def test_like_recipe(self):
+        """User can like a recipe"""
+        self.client.login(username='likeuser', password='password')
+
+        response = self.client.post(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            RecipeLike.objects.filter(
+                user=self.user,
+                recipe=self.recipe
+            ).exists()
+        )
+
+        data = response.json()
+        self.assertTrue(data['liked'])
+        self.assertEqual(data['total_likes'], 1)
+
+    def test_unlike_recipe(self):
+        """User can unlike a previously liked recipe"""
+        RecipeLike.objects.create(
+            user=self.user,
+            recipe=self.recipe
+        )
+
+        self.client.login(username='likeuser', password='password')
+
+        response = self.client.post(
+            self.url,
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            RecipeLike.objects.filter(
+                user=self.user,
+                recipe=self.recipe
+            ).exists()
+        )
+
+        data = response.json()
+        self.assertFalse(data['liked'])
+        self.assertEqual(data['total_likes'], 0)
+
+    def test_like_toggle_twice(self):
+        """Liking twice toggles like → unlike"""
+        self.client.login(username='likeuser', password='password')
+
+        # Like
+        self.client.post(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        # Unlike
+        response = self.client.post(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        data = response.json()
+        self.assertFalse(data['liked'])
+        self.assertEqual(data['total_likes'], 0)
+
+    def test_unauthenticated_user_redirected(self):
+        """Unauthenticated users cannot like"""
+        response = self.client.post(self.url)
+
+        # LoginRequiredMixin redirects to login page
+        self.assertEqual(response.status_code, 302)
+
+        self.assertEqual(
+            RecipeLike.objects.filter(recipe=self.recipe).count(),
+            0
+        )
