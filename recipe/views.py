@@ -187,3 +187,26 @@ class EditRecipeView(View):
     def forms_are_valid(self, forms):
         return all(form.is_valid() for form in forms.values() if hasattr(form, 'is_valid'))
     
+class ToggleLikeView(LoginRequiredMixin, View):
+    """
+    Toggle like/unlike for a recipe via AJAX.
+    Returns JSON with updated like status and count.
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
+        existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
+        if existing_like.exists():
+            # Unlike
+            existing_like.delete()
+            liked = False
+        else:
+            # Like
+            RecipeLike.objects.create(user=user, recipe=recipe)
+            liked = True
+
+        return JsonResponse({
+            'liked': liked,
+            'total_likes': recipe.recipe_likes.count(),
+        })
