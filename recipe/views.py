@@ -102,18 +102,26 @@ class RecipeDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         recipe = self.get_object()
 
-        # Get first and second image safely
+        # Images & data
         first_img = recipe.get_first_image_url()
         nutrition = getattr(recipe, 'nutrition', None)
         ingredients = recipe.ingredients.all()
 
-        # Split instructions into lines (assuming instructions are stored as text with line breaks)
-        points=recipe.instructions.split(".")
+        points = recipe.instructions.split(".")
         instruction_list = [point.strip() for point in points if point.strip()]
+
+        liked = False
+        if self.request.user.is_authenticated:
+            liked = recipe.liked_by.filter(
+                id=self.request.user.id
+            ).exists()
+
         context.update({
             'first_img': first_img,
             'nutrition': nutrition,
             'ingredient': ingredients,
             'instruction': instruction_list,
+            'liked': liked,
         })
+
         return context
