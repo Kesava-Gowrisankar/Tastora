@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from .domains import create_recipe_with_details, update_recipe_with_details
-from recipe.models import Recipe, Ingredient, Nutrition, RecipeImage
+from .models import Recipe, Ingredient, Nutrition, RecipeImage, RecipeLike
 import copy
 
 class CreateRecipeDomainFunctionTestCase(TestCase):
