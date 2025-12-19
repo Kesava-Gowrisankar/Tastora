@@ -173,7 +173,7 @@ class EditRecipeView(View):
         )
 
         messages.success(request, "Recipe updated successfully!")
-        return redirect('recipe:edit_recipe', pk=recipe.pk)
+        return redirect('recipe:recipe_detail', pk=recipe.pk)
     
     def forms_are_valid(self, forms):
         return all(form.is_valid() for form in forms.values() if hasattr(form, 'is_valid'))
