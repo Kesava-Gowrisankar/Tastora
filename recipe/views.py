@@ -12,7 +12,6 @@ from django.views.generic.edit import FormView
 from .domains import create_recipe_with_details, update_recipe_with_details
 from .models import Collection, Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import CollectionForm, IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
-from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
