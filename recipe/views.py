@@ -203,5 +203,131 @@ class ToggleLikeView(LoginRequiredMixin, View):
         
         return JsonResponse({
             'liked': liked,
-            'total_likes': total_likes,
+            'total_likes': recipe.recipe_likes.count(),
         })
+
+class AddToCollectionView(LoginRequiredMixin, FormView):
+    template_name = 'recipe/add_to_collection.html'
+    form_class = CollectionForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.recipe = get_object_or_404(Recipe, pk=self.kwargs['recipe_id'])
+        self.collections = request.user.collections.all()
+        self.recipe_collections = self.collections.filter(recipes=self.recipe).values_list('id', flat=True)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        new_collection = form.save(commit=False)
+        new_collection.owner = self.request.user
+        new_collection.save()
+        new_collection.recipes.add(self.recipe)
+        return redirect('recipe:add_to_collection', recipe_id=self.recipe.id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'recipe': self.recipe,
+            'collections': self.collections,
+            'recipe_collections': list(self.recipe_collections),
+        })
+        return context
+
+
+# Class-based view to toggle a recipe in/out of a collection
+class ToggleCollectionMembershipView(LoginRequiredMixin, View):
+
+    def get(self, request, recipe_id, collection_id):
+        recipe = get_object_or_404(Recipe, pk=recipe_id)
+        collection = get_object_or_404(Collection, pk=collection_id, owner=request.user)
+
+        if recipe in collection.recipes.all():
+            collection.recipes.remove(recipe)
+        else:
+            collection.recipes.add(recipe)
+
+        return redirect('recipe:add_to_collection', recipe_id=recipe.id)
+
+class AllCollectionView(LoginRequiredMixin, ListView):
+    model = Collection
+    template_name = "recipe/all_collections.html"
+    context_object_name = "collections"
+
+    def get_queryset(self):
+        # Prefetch recipes for efficiency
+        return Collection.objects.filter(owner=self.request.user).prefetch_related('recipes')
+
+
+class CollectionDetailView(LoginRequiredMixin, View):
+    template_name = "recipe/collection_detail.html"
+
+    def get(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        recipes = collection.recipes.prefetch_related('images')
+        form = CollectionForm(instance=collection)
+        return render(request, self.template_name, {
+            'collection': collection,
+            'recipes': recipes,
+            'form': form,
+        })
+
+    def post(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        recipes = collection.recipes.prefetch_related('images')
+        form = CollectionForm(request.POST, instance=collection)
+
+        # Rename collection
+        if "update_name" in request.POST:
+            if form.is_valid():
+                form.save()
+           
+            return redirect('recipe:collection_detail', pk=collection.pk)
+
+        # Delete the whole collection
+        elif "delete_collection" in request.POST:
+            collection.delete()
+            return redirect('recipe:all_collections')
+
+        # Remove a recipe from the collection
+        elif "remove_recipe" in request.POST:
+            recipe_id = request.POST.get("recipe_id")
+            recipe = get_object_or_404(Recipe, pk=recipe_id)
+            collection.recipes.remove(recipe)
+            return redirect('recipe:collection_detail', pk=collection.pk)
+
+        return render(request, self.template_name, {
+            'collection': collection,
+            'recipes': recipes,
+            'form': form,
+        })
+
+class DeleteCollectionView(LoginRequiredMixin, View):
+    template_name = "recipe/confirm_delete_collection.html"
+
+    def get(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        return render(request, self.template_name, {'collection': collection})
+
+    def post(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk, owner=request.user)
+        collection.delete()
+        return redirect('recipe:all_collections')
+    
+class AuthorRecipeListView(LoginRequiredMixin, ListView):
+    model = Recipe
+    template_name = "recipe/author_recipes.html"
+    context_object_name = "recipes"
+
+    def get_queryset(self):
+        return Recipe.objects.filter(author=self.request.user).order_by('-created')
+
+class DeleteRecipeView(LoginRequiredMixin, View):
+    template_name = "recipe/confirm_delete_recipe.html"
+
+    def get(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        return render(request, self.template_name, {'recipe': recipe})
+
+    def post(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        recipe.delete()
+        return redirect('recipe:author_recipes')
