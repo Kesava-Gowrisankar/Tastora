@@ -270,7 +270,8 @@ class RecipeDetailViewTestCase(TestCase):
         )
         url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_ingredients.pk})
         response = self.client.get(url)
-        self.assertEqual(list(response.context['ingredient']), [])
+        response = self.client.get(self.url)
+        self.assertEqual(list(response.context['ingredients']), [])
 
     def test_recipe_without_images(self):
         recipe_no_image = Recipe.objects.create(

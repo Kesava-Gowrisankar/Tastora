@@ -103,12 +103,10 @@ class RecipeDetailView(DetailView):
         recipe = self.get_object()
 
         # Images & data
-        first_img = recipe.get_first_image_url()
         nutrition = getattr(recipe, 'nutrition', None)
         ingredients = recipe.ingredients.all()
 
-        points = recipe.instructions.split(".")
-        instruction_list = [point.strip() for point in points if point.strip()]
+        instruction_list = [point.strip() for point in recipe.instructions.split(".") if point.strip() ]
 
         liked = False
         if self.request.user.is_authenticated:
@@ -117,10 +115,9 @@ class RecipeDetailView(DetailView):
             ).exists()
 
         context.update({
-            'first_img': first_img,
             'nutrition': nutrition,
-            'ingredient': ingredients,
-            'instruction': instruction_list,
+            'ingredients': ingredients,
+            'instructions': instruction_list,
             'liked': liked,
         })
 
