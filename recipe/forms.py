@@ -16,7 +16,7 @@ class RecipeForm(forms.ModelForm):
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
-        if self.user and Recipe.objects.filter(title=title, author=self.user).exists():
+        if self.user and Recipe.objects.filter(title=title, author=self.user).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("You already have a recipe with this title.")
         return title
     
@@ -62,4 +62,10 @@ class IngredientForm(forms.ModelForm):
             "unit": forms.Select(choices=Ingredient.UnitTypes.choices),
             "optional": forms.CheckboxInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].required = False
+        self.fields['quantity'].required = False
+        self.fields['unit'].required = False
 IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)

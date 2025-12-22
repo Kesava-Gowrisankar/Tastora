@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from Tastora.recipe.domains import create_recipe_with_details
+from .domains import create_recipe_with_details, update_recipe_with_details
 from recipe.models import Recipe, Ingredient, Nutrition, RecipeImage
 import copy
 
@@ -310,3 +310,189 @@ class RecipeDetailViewTestCase(TestCase):
         url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_empty_instr.pk})
         response = self.client.get(self.url)
         self.assertEqual(response.context['instructions'], [])
+
+class UpdateRecipeDomainFunctionTestCase(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='editdomainuser',
+            password='password'
+        )
+
+        # ---------- Existing Recipe ----------
+        self.recipe = Recipe.objects.create(
+            title='Original Recipe',
+            category='0',
+            cuisine='Indian',
+            difficulty='0',
+            servings=2,
+            prep_time=10,
+            total_time=20,
+            instructions='Old step.',
+            author=self.user
+        )
+
+        # ---------- Existing Nutrition ----------
+        self.nutrition = Nutrition.objects.create(
+            recipe=self.recipe,
+            calories=100,
+            protein=10,
+            fat=5,
+            sugar=2,
+            fiber=3,
+            carbohydrates=20
+        )
+
+        # ---------- Existing Ingredients ----------
+        self.ing1 = Ingredient.objects.create(
+            recipe=self.recipe,
+            name='Salt',
+            quantity=1,
+            unit='0',
+            optional=False
+        )
+
+        self.ing2 = Ingredient.objects.create(
+            recipe=self.recipe,
+            name='Oil',
+            quantity=2,
+            unit='0',
+            optional=False
+        )
+
+    def test_domain_updates_recipe_fields(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={'title': 'Updated Recipe'},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[]
+        )
+
+        self.recipe.refresh_from_db()
+        self.assertEqual(self.recipe.title, 'Updated Recipe')
+
+    def test_domain_updates_nutrition_fields(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={'calories': 300, 'protein': 25},
+            image_data={},
+            ingredients_data=[]
+        )
+
+        self.nutrition.refresh_from_db()
+        self.assertEqual(self.nutrition.calories, 300)
+        self.assertEqual(self.nutrition.protein, 25)
+
+    def test_domain_updates_existing_ingredient(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[
+                {
+                    'id': self.ing1,
+                    'name': 'Black Salt',
+                    'quantity': 3,
+                    'unit': '0',
+                    'optional': True
+                }
+            ]
+        )
+
+        self.ing1.refresh_from_db()
+        self.assertEqual(self.ing1.name, 'Black Salt')
+        self.assertEqual(self.ing1.quantity, 3)
+        self.assertTrue(self.ing1.optional)
+
+    def test_domain_creates_new_ingredient(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[
+                {
+                    'name': 'Pepper',
+                    'quantity': 1,
+                    'unit': '0',
+                    'optional': False
+                }
+            ]
+        )
+
+        self.assertTrue(
+            Ingredient.objects.filter(recipe=self.recipe, name='Pepper').exists()
+        )
+
+    def test_domain_deletes_removed_ingredients(self):
+        # Only ing1 submitted → ing2 should be deleted
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[
+                {
+                    'id': self.ing1,
+                    'name': 'Salt',
+                    'quantity': 1,
+                    'unit': '0',
+                    'optional': False
+                }
+            ]
+        )
+
+        self.assertTrue(
+            Ingredient.objects.filter(id=self.ing1.id).exists()
+        )
+        self.assertFalse(
+            Ingredient.objects.filter(id=self.ing2.id).exists()
+        )
+
+    def test_domain_quantity_defaults_to_zero(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[
+                {
+                    'name': 'Garlic',
+                    'quantity': None,
+                    'unit': '0',
+                    'optional': False
+                }
+            ]
+        )
+
+        ingredient = Ingredient.objects.get(name='Garlic')
+        self.assertEqual(ingredient.quantity, 0)
+
+    def test_domain_optional_defaults_false(self):
+        update_recipe_with_details(
+            recipe=self.recipe,
+            user=self.user,
+            recipe_data={},
+            nutrition_data={},
+            image_data={},
+            ingredients_data=[
+                {
+                    'name': 'Onion',
+                    'quantity': 1,
+                    'unit': '0',
+                    # optional missing
+                }
+            ]
+        )
+
+        ingredient = Ingredient.objects.get(name='Onion')
+        self.assertFalse(ingredient.optional)

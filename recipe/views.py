@@ -1,5 +1,5 @@
-from django.shortcuts import render, redirect
-from django.views.generic import TemplateView,DetailView
+from django.shortcuts import get_object_or_404, render, redirect
+from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -8,7 +8,8 @@ from django.utils.decorators import method_decorator
 from .domains import create_recipe_with_details
 from django.utils import timezone
 
-
+from django.views.generic import DetailView
+from .domains import create_recipe_with_details, update_recipe_with_details
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 
@@ -117,5 +118,64 @@ class RecipeDetailView(DetailView):
             'liked': liked,
             'now': timezone.now()
         })
-
         return context
+
+@method_decorator(login_required, name='dispatch')
+class EditRecipeView(View):
+    template_name = 'recipe/edit_recipe.html'
+
+    def get_forms(self, request, recipe):
+        return {
+            'recipeform': RecipeForm(
+                request.POST or None,
+                request.FILES or None,
+                instance=recipe,
+                user=request.user
+            ),
+            'nutritionform': NutritionForm(
+                request.POST or None,
+                instance=getattr(recipe, 'nutrition', None)
+            ),
+            'recipe_image': RecipeImageForm(
+                request.POST or None,
+                request.FILES or None
+            ),
+            'ingredient_formset': IngredientFormSetClass(
+                request.POST or None,
+                queryset=recipe.ingredients.all()
+            ),
+            'recipe': recipe,
+        }
+
+    def get(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        return render(request, self.template_name, self.get_forms(request, recipe))
+
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
+        forms = self.get_forms(request, recipe)
+
+        if not self.forms_are_valid(forms):
+            messages.error(request, "Please correct the errors below.")
+            return render(request, self.template_name, forms)
+
+        update_recipe_with_details(
+            recipe=recipe,
+            user=request.user,
+            recipe_data=forms['recipeform'].cleaned_data,
+            nutrition_data=forms['nutritionform'].cleaned_data,
+            image_data=forms['recipe_image'].cleaned_data,
+            ingredients_data=[
+                f.cleaned_data
+                for f in forms['ingredient_formset']
+                if f.cleaned_data and not f.cleaned_data.get('DELETE')
+            ],
+        )
+
+        messages.success(request, "Recipe updated successfully!")
+        return redirect('recipe:recipe_detail', pk=recipe.pk)
+    
+    def forms_are_valid(self, forms):
+        results = [form.is_valid() for form in forms.values() if hasattr(form, 'is_valid')]
+        return all(results)
+    
