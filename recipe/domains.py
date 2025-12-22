@@ -50,10 +50,10 @@ def update_recipe_with_details(
     Ingredient.objects.bulk_create([
         Ingredient(
             recipe=recipe,
-            name=ing.get('name'),
-            quantity=ing.get('quantity') or 0,
-            unit=ing.get('unit'),
-            optional=ing.get('optional', False),
+            name=ingredient.get('name'),
+            quantity=ingredient.get('quantity') or 0,
+            unit=ingredient.get('unit'),
+            optional=ingredient.get('optional', False),
         )
-        for ing in ingredients_data
+        for ingredient in ingredients_data
     ])
