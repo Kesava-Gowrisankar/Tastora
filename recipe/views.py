@@ -1,11 +1,13 @@
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView,DetailView
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from .domains import create_recipe_with_details
+from django.utils import timezone
+
 
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
@@ -92,3 +94,28 @@ class AddIngredientFormView(View):
 
         new_total = idx + 1
         return render(request, 'recipe/forms/_ingredient_form.html', {'form': form, 'new_total': new_total})
+
+class RecipeDetailView(DetailView):
+    model = Recipe
+    template_name = 'recipe/detail_recipe.html'
+    context_object_name = 'recipe'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        recipe = self.get_object()
+
+        instruction_list = [point.strip() for point in recipe.instructions.split(".") if point.strip() ]
+
+        liked = False
+        if self.request.user.is_authenticated:
+            liked = recipe.liked_by.filter(
+                id=self.request.user.id
+            ).exists()
+
+        context.update({
+            'instructions': instruction_list,
+            'liked': liked,
+            'now': timezone.now()
+        })
+
+        return context
