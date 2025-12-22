@@ -176,5 +176,6 @@ class EditRecipeView(View):
         return redirect('recipe:recipe_detail', pk=recipe.pk)
     
     def forms_are_valid(self, forms):
-        return all(form.is_valid() for form in forms.values() if hasattr(form, 'is_valid'))
+        results = [form.is_valid() for form in forms.values() if hasattr(form, 'is_valid')]
+        return all(results)
     
