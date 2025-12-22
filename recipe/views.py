@@ -13,7 +13,6 @@ from django.views.generic import DetailView
 from .domains import create_recipe_with_details, update_recipe_with_details
 from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
-from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
@@ -192,17 +191,18 @@ class ToggleLikeView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         recipe = get_object_or_404(Recipe, pk=pk)
         user = request.user
-        existing_like = RecipeLike.objects.filter(user=user, recipe=recipe)
-        if existing_like.exists():
-            # Unlike
-            existing_like.delete()
+        like, created = RecipeLike.objects.get_or_create(user=user, recipe=recipe)
+        if not created:
+            # Unlike if it already existed
+            like.delete()
             liked = False
         else:
-            # Like
-            RecipeLike.objects.create(user=user, recipe=recipe)
+            # Liked
             liked = True
 
+        total_likes = recipe.recipe_likes.count()
+        
         return JsonResponse({
             'liked': liked,
-            'total_likes': recipe.recipe_likes.count(),
+            'total_likes': total_likes,
         })
