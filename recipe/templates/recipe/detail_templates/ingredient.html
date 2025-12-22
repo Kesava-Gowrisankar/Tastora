@@ -1,10 +1,10 @@
 <div id="recipe-ingredients-card" class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 ">
     <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">Ingredients</h2>
     
-    {% if ingredient %}
+    {% if ingredients %}
         <!-- Two-column grid layout for desktop/large screens -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-3">
-            {% for item in ingredient %}
+            {% for item in ingredients %}
                 <!-- Ingredient Item -->
                 <div class="flex items-center  text-sm text-gray-700">
                     <span class="mr-2 font-medium">
