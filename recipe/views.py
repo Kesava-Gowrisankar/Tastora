@@ -6,6 +6,8 @@ from django.db import transaction
 from django.views import View
 from django.utils.decorators import method_decorator
 from .domains import create_recipe_with_details
+from django.utils import timezone
+
 
 from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
@@ -102,10 +104,6 @@ class RecipeDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         recipe = self.get_object()
 
-        # Images & data
-        nutrition = getattr(recipe, 'nutrition', None)
-        ingredients = recipe.ingredients.all()
-
         instruction_list = [point.strip() for point in recipe.instructions.split(".") if point.strip() ]
 
         liked = False
@@ -115,10 +113,9 @@ class RecipeDetailView(DetailView):
             ).exists()
 
         context.update({
-            'nutrition': nutrition,
-            'ingredients': ingredients,
             'instructions': instruction_list,
             'liked': liked,
+            'now': timezone.now()
         })
 
         return context
