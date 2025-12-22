@@ -44,45 +44,16 @@ def update_recipe_with_details(
     if uploaded_image:
         RecipeImage.objects.create(recipe=recipe, image=uploaded_image)
 
-    
-    submitted_ids = set()
+    # --- Ingredients (rebuild from scratch) ---
+    Ingredient.objects.filter(recipe=recipe).delete()
 
-    ingredients_to_create = []
-    ingredients_to_update = []
-
-    # Separate ingredients into create and update lists
-    for ing_data in ingredients_data:
-        ingredient_instance = ing_data.get('id')
-
-        if ingredient_instance:
-            ingredient = ingredient_instance
-            ingredient.name = ing_data.get('name')
-            ingredient.quantity = ing_data.get('quantity') or 0
-            ingredient.unit = ing_data.get('unit')
-            ingredient.optional = ing_data.get('optional', False)
-            ingredients_to_update.append(ingredient)
-            submitted_ids.add(ingredient.id)
-        else:
-            ingredients_to_create.append(
-                Ingredient(
-                    recipe=recipe,
-                    name=ing_data.get('name'),
-                    quantity=ing_data.get('quantity') or 0,
-                    unit=ing_data.get('unit'),
-                    optional=ing_data.get('optional', False),
-                )
-            )
-
-    # Perform bulk operations
-    if ingredients_to_update:
-        Ingredient.objects.bulk_update(ingredients_to_update, ['name', 'quantity', 'unit', 'optional'])
-
-    if ingredients_to_create:
-        created_ingredients = Ingredient.objects.bulk_create(ingredients_to_create)
-        for ing in created_ingredients:
-            submitted_ids.add(ing.id)
-
-    # --- Delete removed ingredients ---
-    Ingredient.objects.filter(
-        recipe=recipe
-    ).exclude(id__in=submitted_ids).delete()
+    Ingredient.objects.bulk_create([
+        Ingredient(
+            recipe=recipe,
+            name=ing.get('name'),
+            quantity=ing.get('quantity') or 0,
+            unit=ing.get('unit'),
+            optional=ing.get('optional', False),
+        )
+        for ing in ingredients_data
+    ])
