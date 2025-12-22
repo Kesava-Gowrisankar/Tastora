@@ -9,10 +9,10 @@ from django.utils.decorators import method_decorator
 from .domains import create_recipe_with_details
 from django.utils import timezone
 
-from django.views.generic import DetailView
+from django.views.generic import DetailView,ListView,FormView
 from .domains import create_recipe_with_details, update_recipe_with_details
-from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
-from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from .models import Collection, Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
+from .forms import CollectionForm, IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
