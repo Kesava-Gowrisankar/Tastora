@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
@@ -10,8 +11,9 @@ from django.utils import timezone
 
 from django.views.generic import DetailView
 from .domains import create_recipe_with_details, update_recipe_with_details
-from recipe.models import Recipe, Nutrition, Ingredient, RecipeImage
+from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 RECIPES_ON_HOMEPAGE = 5
 
@@ -118,6 +120,7 @@ class RecipeDetailView(DetailView):
             'liked': liked,
             'now': timezone.now()
         })
+
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -173,9 +176,33 @@ class EditRecipeView(View):
         )
 
         messages.success(request, "Recipe updated successfully!")
-        return redirect('recipe:recipe_detail', pk=recipe.pk)
+        return redirect('recipe:edit_recipe', pk=recipe.pk)
     
     def forms_are_valid(self, forms):
         results = [form.is_valid() for form in forms.values() if hasattr(form, 'is_valid')]
         return all(results)
     
+class ToggleLikeView(LoginRequiredMixin, View):
+    """
+    Toggle like/unlike for a recipe via AJAX.
+    Returns JSON with updated like status and count.
+    """
+
+    def post(self, request, pk, *args, **kwargs):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        user = request.user
+        like, created = RecipeLike.objects.get_or_create(user=user, recipe=recipe)
+        if not created:
+            # Unlike if it already existed
+            like.delete()
+            liked = False
+        else:
+            # Liked
+            liked = True
+
+        total_likes = recipe.recipe_likes.count()
+        
+        return JsonResponse({
+            'liked': liked,
+            'total_likes': total_likes,
+        })
