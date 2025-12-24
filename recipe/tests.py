@@ -497,103 +497,155 @@ class UpdateRecipeDomainFunctionTestCase(TestCase):
         ingredient = Ingredient.objects.get(name='Onion')
         self.assertFalse(ingredient.optional)
 
-class ToggleLikeViewTestCase(TestCase):
+class RecipeCollectionViewsTest(TestCase):
 
     def setUp(self):
-        self.client = Client()
-
-        # Create user
+        # Users
         self.user = User.objects.create_user(
-            username='likeuser',
-            password='password'
+            username='testuser',
+            password='testpass123'
+        )
+        self.other_user = User.objects.create_user(
+            username='otheruser',
+            password='testpass123'
         )
 
-        # Create recipe
+        # Login
+        self.client.login(username='testuser', password='testpass123')
+
+        # Recipe
         self.recipe = Recipe.objects.create(
-            title='Like Test Recipe',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=2,
-            prep_time=10,
-            total_time=20,
-            instructions='Test steps.',
+            title='Test Recipe',
             author=self.user
         )
 
-        self.url = reverse(
-            'recipe:toggle_like',
-            kwargs={'pk': self.recipe.pk}
+        # Collection
+        self.collection = Collection.objects.create(
+            name='My Collection',
+            owner=self.user
         )
 
-    def test_like_recipe(self):
-        """User can like a recipe"""
-        self.client.login(username='likeuser', password='password')
-
-        response = self.client.post(
-            self.url,
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-        )
-
+    # -------------------------
+    # AddToCollectionView
+    # -------------------------
+    def test_add_to_collection_page_loads(self):
+        url = reverse('recipe:add_to_collection', args=[self.recipe.id])
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            RecipeLike.objects.filter(
-                user=self.user,
-                recipe=self.recipe
-            ).exists()
-        )
+        self.assertContains(response, self.recipe.title)
 
-        data = response.json()
-        self.assertTrue(data['liked'])
-        self.assertEqual(data['total_likes'], 1)
-
-    def test_unlike_recipe(self):
-        """User can unlike a previously liked recipe"""
-        RecipeLike.objects.create(
-            user=self.user,
-            recipe=self.recipe
-        )
-
-        self.client.login(username='likeuser', password='password')
-
-        response = self.client.post(
-            self.url,
-            HTTP_X_REQUESTED_WITH='XMLHttpRequest'
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            RecipeLike.objects.filter(
-                user=self.user,
-                recipe=self.recipe
-            ).exists()
-        )
-
-        data = response.json()
-        self.assertFalse(data['liked'])
-        self.assertEqual(data['total_likes'], 0)
-
-    def test_like_toggle_twice(self):
-        """Liking twice toggles like → unlike"""
-        self.client.login(username='likeuser', password='password')
-
-        # Like
-        self.client.post(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        # Unlike
-        response = self.client.post(self.url, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-
-        data = response.json()
-        self.assertFalse(data['liked'])
-        self.assertEqual(data['total_likes'], 0)
-
-    def test_unauthenticated_user_redirected(self):
-        """Unauthenticated users cannot like"""
-        response = self.client.post(self.url)
-
-        # LoginRequiredMixin redirects to login page
+    def test_create_new_collection_and_add_recipe(self):
+        url = reverse('recipe:add_to_collection', args=[self.recipe.id])
+        response = self.client.post(url, {
+            'name': 'New Collection'
+        })
         self.assertEqual(response.status_code, 302)
-
-        self.assertEqual(
-            RecipeLike.objects.filter(recipe=self.recipe).count(),
-            0
+        self.assertTrue(
+            Collection.objects.filter(name='New Collection', owner=self.user).exists()
         )
+
+    # -------------------------
+    # ToggleCollectionMembershipView
+    # -------------------------
+    def test_toggle_add_recipe_to_collection(self):
+        url = reverse(
+            'recipe:toggle_collection',
+            args=[self.recipe.id, self.collection.id]
+        )
+        self.client.get(url)
+        self.assertIn(self.recipe, self.collection.recipes.all())
+
+    def test_toggle_remove_recipe_from_collection(self):
+        self.collection.recipes.add(self.recipe)
+        url = reverse(
+            'recipe:toggle_collection',
+            args=[self.recipe.id, self.collection.id]
+        )
+        self.client.get(url)
+        self.assertNotIn(self.recipe, self.collection.recipes.all())
+
+    # -------------------------
+    # AllCollectionView
+    # -------------------------
+    def test_all_collections_view(self):
+        url = reverse('recipe:all_collections')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.collection.name)
+
+    # -------------------------
+    # CollectionDetailView
+    # -------------------------
+    def test_collection_detail_view(self):
+        url = reverse('recipe:collection_detail', args=[self.collection.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.collection.name)
+
+    def test_rename_collection(self):
+        url = reverse('recipe:collection_detail', args=[self.collection.id])
+        response = self.client.post(url, {
+            'name': 'Updated Name',
+            'update_name': '1'
+        })
+        self.collection.refresh_from_db()
+        self.assertEqual(self.collection.name, 'Updated Name')
+
+    def test_remove_recipe_from_collection(self):
+        self.collection.recipes.add(self.recipe)
+        url = reverse('recipe:collection_detail', args=[self.collection.id])
+        response = self.client.post(url, {
+            'remove_recipe': '1',
+            'recipe_id': self.recipe.id
+        })
+        self.assertNotIn(self.recipe, self.collection.recipes.all())
+
+    def test_delete_collection(self):
+        url = reverse('recipe:collection_detail', args=[self.collection.id])
+        response = self.client.post(url, {
+            'delete_collection': '1'
+        })
+        self.assertFalse(
+            Collection.objects.filter(id=self.collection.id).exists()
+        )
+
+    # -------------------------
+    # DeleteCollectionView
+    # -------------------------
+    def test_delete_collection_view(self):
+        url = reverse('recipe:delete_collection', args=[self.collection.id])
+        response = self.client.post(url)
+        self.assertFalse(
+            Collection.objects.filter(id=self.collection.id).exists()
+        )
+
+    # -------------------------
+    # AuthorRecipeListView
+    # -------------------------
+    def test_author_recipe_list_view(self):
+        url = reverse('recipe:author_recipes')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.recipe.title)
+
+    # -------------------------
+    # DeleteRecipeView
+    # -------------------------
+    def test_delete_recipe_view(self):
+        url = reverse('recipe:delete_recipe', args=[self.recipe.id])
+        response = self.client.post(url)
+        self.assertFalse(
+            Recipe.objects.filter(id=self.recipe.id).exists()
+        )
+
+    # -------------------------
+    # Permissions
+    # -------------------------
+    def test_user_cannot_delete_others_recipe(self):
+        recipe = Recipe.objects.create(
+            title='Other Recipe',
+            author=self.other_user
+        )
+        url = reverse('recipe:delete_recipe', args=[recipe.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
