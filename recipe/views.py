@@ -1,4 +1,3 @@
-from typing import Collection
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
@@ -13,7 +12,7 @@ from django.utils import timezone
 from django.views.generic import DetailView,ListView, FormView
 from .forms import CollectionForm
 from .domains import create_recipe_with_details, update_recipe_with_details
-from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike
+from .models import Recipe, Nutrition, Ingredient, RecipeImage, RecipeLike, Collection
 from .forms import IngredientFormSetClass, RecipeForm, NutritionForm, RecipeImageForm, IngredientForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -243,7 +242,7 @@ class ToggleCollectionMembershipView(LoginRequiredMixin, View):
         recipe = get_object_or_404(Recipe, pk=recipe_id)
         collection = get_object_or_404(Collection, pk=collection_id, owner=request.user)
 
-        if recipe in collection.recipes.all():
+        if collection.recipes.filter(pk=recipe.pk).exists():
             collection.recipes.remove(recipe)
         else:
             collection.recipes.add(recipe)
@@ -275,28 +274,26 @@ class CollectionDetailView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         collection = get_object_or_404(Collection, pk=pk, owner=request.user)
-        recipes = collection.recipes.prefetch_related('images')
-        form = CollectionForm(request.POST, instance=collection)
 
-        # Rename collection
         if "update_name" in request.POST:
+            form = CollectionForm(request.POST, instance=collection)
             if form.is_valid():
                 form.save()
-           
-            return redirect('recipe:collection_detail', pk=collection.pk)
+                return redirect('recipe:collection_detail', pk=collection.pk)
 
-        # Delete the whole collection
         elif "delete_collection" in request.POST:
             collection.delete()
             return redirect('recipe:all_collections')
 
-        # Remove a recipe from the collection
         elif "remove_recipe" in request.POST:
             recipe_id = request.POST.get("recipe_id")
             recipe = get_object_or_404(Recipe, pk=recipe_id)
             collection.recipes.remove(recipe)
             return redirect('recipe:collection_detail', pk=collection.pk)
 
+        # Only fetch recipes and form if rendering template due to error
+        recipes = collection.recipes.prefetch_related('images')
+        form = CollectionForm(instance=collection)
         return render(request, self.template_name, {
             'collection': collection,
             'recipes': recipes,
@@ -321,7 +318,7 @@ class AuthorRecipeListView(LoginRequiredMixin, ListView):
     context_object_name = "recipes"
 
     def get_queryset(self):
-        return Recipe.objects.filter(author=self.request.user).order_by('-created')
+        return Recipe.objects.filter(author=self.request.user).order_by('-created').prefetch_related('images')
 
 class DeleteRecipeView(LoginRequiredMixin, View):
     template_name = "recipe/confirm_delete_recipe.html"
