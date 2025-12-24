@@ -1,10 +1,112 @@
-from django.test import TestCase, Client
-from django.urls import reverse
+from unittest import TestCase
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from .domains import create_recipe_with_details, update_recipe_with_details
-from .models import Recipe, Ingredient, Nutrition, RecipeImage, RecipeLike
-import copy
+
+from .models import (
+    Recipe,
+    Ingredient,
+    Nutrition,
+    RecipeImage,
+    RecipeLike,
+    Collection,
+)
+
+
+class RecipeTestDataMixin:
+    """
+    Shared test data for recipes, users, ingredients, nutrition,
+    images, and collections to reduce duplication across test cases.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        # -------------------------
+        # Users
+        # -------------------------
+        cls.user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        cls.other_user = User.objects.create_user(
+            username='otheruser',
+            password='testpass123'
+        )
+
+        # -------------------------
+        # Recipe
+        # -------------------------
+        cls.recipe = Recipe.objects.create(
+            title='Test Recipe',
+            category=Recipe.CategoryTypes.VEG,           
+            cuisine='Italian',
+            difficulty=Recipe.DifficultyLevels.EASY,     
+            servings=2,
+            prep_time=10,
+            total_time=20,
+            instructions='Step 1. Step 2. Step 3.',
+            author=cls.user
+        )
+
+        # -------------------------
+        # Nutrition
+        # -------------------------
+        cls.nutrition = Nutrition.objects.create(
+            recipe=cls.recipe,
+            calories=200,
+            protein=10,
+            fat=5,
+            sugar=8,
+            fiber=3,
+            carbohydrates=30
+        )
+
+        # -------------------------
+        # Ingredients
+        # -------------------------
+        cls.ingredient1 = Ingredient.objects.create(
+            recipe=cls.recipe,
+            name='Tomato',
+            quantity=100,
+            unit=Ingredient.UnitTypes.GRAM,   
+            optional=False
+        )
+        cls.ingredient2 = Ingredient.objects.create(
+            recipe=cls.recipe,
+            name='Cheese',
+            quantity=50,
+            unit=Ingredient.UnitTypes.GRAM,   
+            optional=True
+        )
+
+        # -------------------------
+        # Recipe Image
+        # -------------------------
+        cls.image = RecipeImage.objects.create(
+            recipe=cls.recipe,
+            image=SimpleUploadedFile(
+                name='test.jpg',
+                content=b'\x47\x49\x46',
+                content_type='image/jpeg'
+            )
+        )
+
+        # -------------------------
+        # Collection
+        # -------------------------
+        cls.collection = Collection.objects.create(
+            name='My Collection',
+            owner=cls.user
+        )
+
+        # -------------------------
+        # Domain test image
+        # -------------------------
+        cls.domain_image = SimpleUploadedFile(
+            name='domain_test.jpg',
+            content=b'\x47\x49\x46',
+            content_type='image/jpeg'
+        )
+
 
 class CreateRecipeDomainFunctionTestCase(TestCase):
 
