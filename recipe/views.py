@@ -1,3 +1,4 @@
+from typing import Collection
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
@@ -121,6 +122,7 @@ class RecipeDetailView(DetailView):
             'liked': liked,
             'now': timezone.now()
         })
+
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -176,7 +178,7 @@ class EditRecipeView(View):
         )
 
         messages.success(request, "Recipe updated successfully!")
-        return redirect('recipe:recipe_detail', pk=recipe.pk)
+        return redirect('recipe:edit_recipe', pk=recipe.pk)
     
     def forms_are_valid(self, forms):
         results = [form.is_valid() for form in forms.values() if hasattr(form, 'is_valid')]
@@ -204,9 +206,9 @@ class ToggleLikeView(LoginRequiredMixin, View):
         
         return JsonResponse({
             'liked': liked,
-            'total_likes': recipe.recipe_likes.count(),
+            'total_likes': total_likes,
         })
-
+    
 class AddToCollectionView(LoginRequiredMixin, FormView):
     template_name = 'recipe/add_to_collection.html'
     form_class = CollectionForm
