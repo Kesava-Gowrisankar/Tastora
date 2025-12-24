@@ -1,4 +1,3 @@
-from typing import Collection
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import TemplateView
