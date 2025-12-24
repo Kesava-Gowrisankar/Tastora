@@ -549,19 +549,19 @@ class RecipeCollectionViewsTest(TestCase):
     # -------------------------
     def test_toggle_add_recipe_to_collection(self):
         url = reverse(
-            'recipe:toggle_collection',
+            'recipe:toggle_collection_membership',
             args=[self.recipe.id, self.collection.id]
         )
-        self.client.get(url)
+        self.client.post(url)
         self.assertIn(self.recipe, self.collection.recipes.all())
 
     def test_toggle_remove_recipe_from_collection(self):
         self.collection.recipes.add(self.recipe)
         url = reverse(
-            'recipe:toggle_collection',
+            'recipe:toggle_collection_membership',
             args=[self.recipe.id, self.collection.id]
         )
-        self.client.get(url)
+        self.client.post(url)
         self.assertNotIn(self.recipe, self.collection.recipes.all())
 
     # -------------------------
