@@ -34,24 +34,25 @@ class CreateRecipeDomainFunctionTestCase(RecipeTestDataMixin, TestCase):
             'carbohydrates': 30,
         }
 
-    def test_domain_creates_recipe(self):
+    def test_domain_creates_recipe_successfully(self):
         create_recipe_with_details(
             user=self.user,
             recipe_data=self.recipe_data,
             nutrition_data=self.nutrition_data,
             image_data={},
-            ingredients_data=[]
+            ingredients_data=[],
         )
         recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertEqual(recipe.author, self.user)
+        self.assertTrue(Nutrition.objects.filter(recipe=recipe).exists())
 
     def test_domain_creates_recipe_with_image(self):
         create_recipe_with_details(
             user=self.user,
             recipe_data=self.recipe_data,
             nutrition_data=self.nutrition_data,
-            image_data={'image': self.uploaded_image},
-            ingredients_data=[]
+            image_data={'image': self.image},
+            ingredients_data=[],
         )
         recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertTrue(RecipeImage.objects.filter(recipe=recipe).exists())
@@ -83,7 +84,7 @@ class RecipeDetailViewTestCase(RecipeTestDataMixin, TestCase):
         self.image = self.create_test_image(recipe=self.recipe)
         self.url = reverse('recipe:recipe_detail', kwargs={'pk': self.recipe.pk})
 
-    def test_page_loads(self):
+    def test_detail_view_status_code(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
