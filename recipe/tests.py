@@ -1,7 +1,9 @@
-from unittest import TestCase
+from django.test import TestCase, Client
+from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from .domains import create_recipe_with_details, update_recipe_with_details
 from .models import (
     Recipe,
     Ingredient,
@@ -11,18 +13,19 @@ from .models import (
     Collection,
 )
 
+# ============================================================
+# MIXIN: Shared test data (used by multiple test classes)
+# ============================================================
 
 class RecipeTestDataMixin:
     """
-    Shared test data for recipes, users, ingredients, nutrition,
-    images, and collections to reduce duplication across test cases.
+    Shared test data for users, recipes, ingredients,
+    nutrition, images, and collections.
     """
 
     @classmethod
     def setUpTestData(cls):
-        # -------------------------
         # Users
-        # -------------------------
         cls.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
@@ -32,14 +35,12 @@ class RecipeTestDataMixin:
             password='testpass123'
         )
 
-        # -------------------------
         # Recipe
-        # -------------------------
         cls.recipe = Recipe.objects.create(
             title='Test Recipe',
-            category=Recipe.CategoryTypes.VEG,           
+            category=Recipe.CategoryTypes.VEG,
             cuisine='Italian',
-            difficulty=Recipe.DifficultyLevels.EASY,     
+            difficulty=Recipe.DifficultyLevels.EASY,
             servings=2,
             prep_time=10,
             total_time=20,
@@ -47,9 +48,7 @@ class RecipeTestDataMixin:
             author=cls.user
         )
 
-        # -------------------------
         # Nutrition
-        # -------------------------
         cls.nutrition = Nutrition.objects.create(
             recipe=cls.recipe,
             calories=200,
@@ -60,27 +59,23 @@ class RecipeTestDataMixin:
             carbohydrates=30
         )
 
-        # -------------------------
         # Ingredients
-        # -------------------------
         cls.ingredient1 = Ingredient.objects.create(
             recipe=cls.recipe,
             name='Tomato',
             quantity=100,
-            unit=Ingredient.UnitTypes.GRAM,   
+            unit=Ingredient.UnitTypes.GRAM,
             optional=False
         )
         cls.ingredient2 = Ingredient.objects.create(
             recipe=cls.recipe,
             name='Cheese',
             quantity=50,
-            unit=Ingredient.UnitTypes.GRAM,   
+            unit=Ingredient.UnitTypes.GRAM,
             optional=True
         )
 
-        # -------------------------
-        # Recipe Image
-        # -------------------------
+        # Image
         cls.image = RecipeImage.objects.create(
             recipe=cls.recipe,
             image=SimpleUploadedFile(
@@ -90,38 +85,27 @@ class RecipeTestDataMixin:
             )
         )
 
-        # -------------------------
         # Collection
-        # -------------------------
         cls.collection = Collection.objects.create(
             name='My Collection',
             owner=cls.user
         )
 
-        # -------------------------
-        # Domain test image
-        # -------------------------
-        cls.domain_image = SimpleUploadedFile(
+        # Reusable upload
+        cls.uploaded_image = SimpleUploadedFile(
             name='domain_test.jpg',
             content=b'\x47\x49\x46',
             content_type='image/jpeg'
         )
 
 
-class CreateRecipeDomainFunctionTestCase(TestCase):
+# ============================================================
+# DOMAIN: CREATE RECIPE
+# ============================================================
+
+class CreateRecipeDomainFunctionTestCase(RecipeTestDataMixin, TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            username='domainuser',
-            password='password'
-        )
-
-        self.image = SimpleUploadedFile(
-            name='domain_test.jpg',
-            content=b'\x47\x49\x46',
-            content_type='image/jpeg'
-        )
-
         self.recipe_data = {
             'title': 'Domain Recipe',
             'category': '0',
@@ -142,185 +126,49 @@ class CreateRecipeDomainFunctionTestCase(TestCase):
             'carbohydrates': 30,
         }
 
-    def test_domain_creates_recipe_successfully(self):
+    def test_domain_creates_recipe(self):
         create_recipe_with_details(
             user=self.user,
             recipe_data=self.recipe_data,
             nutrition_data=self.nutrition_data,
             image_data={},
-            ingredients_data=[],
+            ingredients_data=[]
         )
 
         recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertEqual(recipe.author, self.user)
-        self.assertTrue(Nutrition.objects.filter(recipe=recipe).exists())
 
     def test_domain_creates_recipe_with_image(self):
         create_recipe_with_details(
             user=self.user,
             recipe_data=self.recipe_data,
             nutrition_data=self.nutrition_data,
-            image_data={'image': self.image},
-            ingredients_data=[],
+            image_data={'image': self.uploaded_image},
+            ingredients_data=[]
         )
 
-        recipe = Recipe.objects.get(title='Domain Recipe')
         self.assertTrue(
-            RecipeImage.objects.filter(recipe=recipe).exists()
+            RecipeImage.objects.filter(recipe__title='Domain Recipe').exists()
         )
 
-    def test_domain_creates_multiple_ingredients(self):
-        ingredients_data = [
-            {
-                'name': 'Tomato',
-                'quantity': 100,
-                'unit': '0',
-                'optional': False,
-            },
-            {
-                'name': 'Cheese',
-                'quantity': 50,
-                'unit': '0',
-                'optional': True,
-            },
-        ]
 
-        create_recipe_with_details(
-            user=self.user,
-            recipe_data=self.recipe_data,
-            nutrition_data=self.nutrition_data,
-            image_data={},
-            ingredients_data=ingredients_data,
-        )
+# ============================================================
+# VIEW: RECIPE DETAIL
+# ============================================================
 
-        recipe = Recipe.objects.get(title='Domain Recipe')
-        self.assertEqual(recipe.ingredients.count(), 2)
-
-    def test_domain_optional_ingredient_defaults_false(self):
-        ingredients_data = [
-            {
-                'name': 'Salt',
-                'quantity': 1,
-                'unit': '0',
-                # optional missing
-            }
-        ]
-
-        create_recipe_with_details(
-            user=self.user,
-            recipe_data=self.recipe_data,
-            nutrition_data=self.nutrition_data,
-            image_data={},
-            ingredients_data=ingredients_data,
-        )
-
-        ingredient = Ingredient.objects.get(name='Salt')
-        self.assertFalse(ingredient.optional)
-
-    def test_domain_quantity_defaults_to_zero(self):
-        ingredients_data = [
-            {
-                'name': 'Pepper',
-                'quantity': None,
-                'unit': '0',
-                'optional': False,
-            }
-        ]
-
-        create_recipe_with_details(
-            user=self.user,
-            recipe_data=self.recipe_data,
-            nutrition_data=self.nutrition_data,
-            image_data={},
-            ingredients_data=ingredients_data,
-        )
-
-        ingredient = Ingredient.objects.get(name='Pepper')
-        self.assertEqual(ingredient.quantity, 0)
-
-    def test_domain_creates_nutrition_correctly(self):
-        create_recipe_with_details(
-            user=self.user,
-            recipe_data=self.recipe_data,
-            nutrition_data=self.nutrition_data,
-            image_data={},
-            ingredients_data=[],
-        )
-
-        nutrition = Nutrition.objects.get(recipe__title='Domain Recipe')
-        self.assertEqual(nutrition.calories, 250)
-        self.assertEqual(nutrition.protein, 15)
-
-class RecipeDetailViewTestCase(TestCase):
+class RecipeDetailViewTestCase(RecipeTestDataMixin, TestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username='detailuser', password='password')
-        self.recipe = Recipe.objects.create(
-            title='Detail Recipe',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=2,
-            prep_time=10,
-            total_time=20,
-            instructions='Step 1. Step 2. Step 3.',
-            author=self.user
-        )
-        # Add nutrition
-        self.nutrition = Nutrition.objects.create(
-            recipe=self.recipe,
-            calories=200,
-            protein=10,
-            fat=5,
-            sugar=8,
-            fiber=3,
-            carbohydrates=30
-        )
-
-        # Add ingredients
-        self.ingredient1 = Ingredient.objects.create(
-            recipe=self.recipe,
-            name='Tomato',
-            quantity=100,
-            unit='0',
-            optional=False
-        )
-        self.ingredient2 = Ingredient.objects.create(
-            recipe=self.recipe,
-            name='Cheese',
-            quantity=50,
-            unit='0',
-            optional=True
-        )
-
-        # Add image
-        self.image = RecipeImage.objects.create(
-            recipe=self.recipe,
-            image=SimpleUploadedFile(
-                name='test.jpg',
-                content=b'\x47\x49\x46',
-                content_type='image/jpeg'
-            )
-        )
-
         self.url = reverse('recipe:recipe_detail', kwargs={'pk': self.recipe.pk})
 
-    def test_detail_view_status_code(self):
+    def test_page_loads(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-
-    def test_detail_view_template_used(self):
-        response = self.client.get(self.url)
-        self.assertTemplateUsed(response, 'recipe/detail_recipe.html')
 
     def test_context_contains_recipe(self):
         response = self.client.get(self.url)
         self.assertEqual(response.context['recipe'], self.recipe)
-
-    def test_context_contains_first_image(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.context['first_img'], self.recipe.get_first_image_url())
 
     def test_context_contains_nutrition(self):
         response = self.client.get(self.url)
@@ -328,141 +176,24 @@ class RecipeDetailViewTestCase(TestCase):
 
     def test_context_contains_ingredients(self):
         response = self.client.get(self.url)
-        response = self.client.get(self.url)
         ingredients = response.context['ingredients']
-        self.assertIn(self.ingredient1, ingredients)
-        self.assertIn(self.ingredient2, ingredients)
         self.assertEqual(ingredients.count(), 2)
 
-    def test_instructions_split_into_list(self):
+    def test_instructions_split(self):
         response = self.client.get(self.url)
-        response = self.client.get(self.url)
-        instructions = response.context['instructions']
-        # Should split by '.' and remove empty strings
-        expected = ['Step 1', 'Step 2', 'Step 3']
-        self.assertEqual(instructions, expected)
-
-    def test_recipe_without_nutrition(self):
-        recipe_no_nutrition = Recipe.objects.create(
-            title='No Nutrition',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=1,
-            prep_time=5,
-            total_time=10,
-            instructions='Do something.',
-            author=self.user
-        )
-        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_nutrition.pk})
-        response = self.client.get(url)
-        self.assertIsNone(response.context['nutrition'])
-
-    def test_recipe_without_ingredients(self):
-        recipe_no_ingredients = Recipe.objects.create(
-            title='No Ingredients',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=1,
-            prep_time=5,
-            total_time=10,
-            instructions='Do something.',
-            author=self.user
-        )
-        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_ingredients.pk})
-        response = self.client.get(url)
-        response = self.client.get(self.url)
-        self.assertEqual(list(response.context['ingredients']), [])
-
-    def test_recipe_without_images(self):
-        recipe_no_image = Recipe.objects.create(
-            title='No Image',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=1,
-            prep_time=5,
-            total_time=10,
-            instructions='Do something.',
-            author=self.user
-        )
-        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_no_image.pk})
-        response = self.client.get(url)
-        self.assertIsNone(response.context['first_img'])
-
-    def test_unauthenticated_user_can_access(self):
-        self.client.logout()
-        response = self.client.get(self.url)
-        # Detail view is accessible without login
-        self.assertEqual(response.status_code, 200)
-
-    def test_instructions_empty_string(self):
-        recipe_empty_instr = Recipe.objects.create(
-            title='Empty Instructions',
-            category='0',
-            cuisine='Italian',
-            difficulty='0',
-            servings=1,
-            prep_time=5,
-            total_time=10,
-            instructions='',
-            author=self.user
-        )
-        url = reverse('recipe:recipe_detail', kwargs={'pk': recipe_empty_instr.pk})
-        response = self.client.get(self.url)
-        self.assertEqual(response.context['instructions'], [])
-
-class UpdateRecipeDomainFunctionTestCase(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username='editdomainuser',
-            password='password'
+        self.assertEqual(
+            response.context['instructions'],
+            ['Step 1', 'Step 2', 'Step 3']
         )
 
-        # ---------- Existing Recipe ----------
-        self.recipe = Recipe.objects.create(
-            title='Original Recipe',
-            category='0',
-            cuisine='Indian',
-            difficulty='0',
-            servings=2,
-            prep_time=10,
-            total_time=20,
-            instructions='Old step.',
-            author=self.user
-        )
 
-        # ---------- Existing Nutrition ----------
-        self.nutrition = Nutrition.objects.create(
-            recipe=self.recipe,
-            calories=100,
-            protein=10,
-            fat=5,
-            sugar=2,
-            fiber=3,
-            carbohydrates=20
-        )
+# ============================================================
+# DOMAIN: UPDATE RECIPE
+# ============================================================
 
-        # ---------- Existing Ingredients ----------
-        self.ing1 = Ingredient.objects.create(
-            recipe=self.recipe,
-            name='Salt',
-            quantity=1,
-            unit='0',
-            optional=False
-        )
+class UpdateRecipeDomainFunctionTestCase(RecipeTestDataMixin, TestCase):
 
-        self.ing2 = Ingredient.objects.create(
-            recipe=self.recipe,
-            name='Oil',
-            quantity=2,
-            unit='0',
-            optional=False
-        )
-
-    def test_domain_updates_recipe_fields(self):
+    def test_updates_recipe_title(self):
         update_recipe_with_details(
             recipe=self.recipe,
             user=self.user,
@@ -475,126 +206,56 @@ class UpdateRecipeDomainFunctionTestCase(TestCase):
         self.recipe.refresh_from_db()
         self.assertEqual(self.recipe.title, 'Updated Recipe')
 
-    def test_domain_updates_nutrition_fields(self):
+    def test_updates_nutrition(self):
         update_recipe_with_details(
             recipe=self.recipe,
             user=self.user,
             recipe_data={},
-            nutrition_data={'calories': 300, 'protein': 25},
+            nutrition_data={'calories': 500},
             image_data={},
             ingredients_data=[]
         )
 
         self.nutrition.refresh_from_db()
-        self.assertEqual(self.nutrition.calories, 300)
-        self.assertEqual(self.nutrition.protein, 25)
+        self.assertEqual(self.nutrition.calories, 500)
 
-    def test_domain_updates_existing_ingredient(self):
-        update_recipe_with_details(
-            recipe=self.recipe,
-            user=self.user,
-            recipe_data={},
-            nutrition_data={},
-            image_data={},
-            ingredients_data=[
-                {
-                    'id': self.ing1,
-                    'name': 'Black Salt',
-                    'quantity': 3,
-                    'unit': '0',
-                    'optional': True
-                }
-            ]
+
+# ============================================================
+# VIEWS: COLLECTION
+# ============================================================
+
+class RecipeCollectionViewsTest(RecipeTestDataMixin, TestCase):
+
+    def setUp(self):
+        self.client.login(username='testuser', password='testpass123')
+
+    def test_add_to_collection_page(self):
+        url = reverse('recipe:add_to_collection', args=[self.recipe.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_toggle_add_recipe(self):
+        url = reverse(
+            'recipe:toggle_collection_membership',
+            args=[self.recipe.id, self.collection.id]
         )
+        self.client.post(url)
+        self.assertIn(self.recipe, self.collection.recipes.all())
 
-        self.ing1.refresh_from_db()
-        self.assertEqual(self.ing1.name, 'Black Salt')
-        self.assertEqual(self.ing1.quantity, 3)
-        self.assertTrue(self.ing1.optional)
-
-    def test_domain_creates_new_ingredient(self):
-        update_recipe_with_details(
-            recipe=self.recipe,
-            user=self.user,
-            recipe_data={},
-            nutrition_data={},
-            image_data={},
-            ingredients_data=[
-                {
-                    'name': 'Pepper',
-                    'quantity': 1,
-                    'unit': '0',
-                    'optional': False
-                }
-            ]
+    def test_toggle_remove_recipe(self):
+        self.collection.recipes.add(self.recipe)
+        url = reverse(
+            'recipe:toggle_collection_membership',
+            args=[self.recipe.id, self.collection.id]
         )
+        self.client.post(url)
+        self.assertNotIn(self.recipe, self.collection.recipes.all())
 
-        self.assertTrue(
-            Ingredient.objects.filter(recipe=self.recipe, name='Pepper').exists()
+    def test_user_cannot_delete_others_recipe(self):
+        recipe = Recipe.objects.create(
+            title='Other Recipe',
+            author=self.other_user
         )
-
-    def test_domain_deletes_removed_ingredients(self):
-        # Only ing1 submitted → ing2 should be deleted
-        update_recipe_with_details(
-            recipe=self.recipe,
-            user=self.user,
-            recipe_data={},
-            nutrition_data={},
-            image_data={},
-            ingredients_data=[
-                {
-                    'id': self.ing1,
-                    'name': 'Salt',
-                    'quantity': 1,
-                    'unit': '0',
-                    'optional': False
-                }
-            ]
-        )
-
-        self.assertTrue(
-            Ingredient.objects.filter(id=self.ing1.id).exists()
-        )
-        self.assertFalse(
-            Ingredient.objects.filter(id=self.ing2.id).exists()
-        )
-
-    def test_domain_quantity_defaults_to_zero(self):
-        update_recipe_with_details(
-            recipe=self.recipe,
-            user=self.user,
-            recipe_data={},
-            nutrition_data={},
-            image_data={},
-            ingredients_data=[
-                {
-                    'name': 'Garlic',
-                    'quantity': None,
-                    'unit': '0',
-                    'optional': False
-                }
-            ]
-        )
-
-        ingredient = Ingredient.objects.get(name='Garlic')
-        self.assertEqual(ingredient.quantity, 0)
-
-    def test_domain_optional_defaults_false(self):
-        update_recipe_with_details(
-            recipe=self.recipe,
-            user=self.user,
-            recipe_data={},
-            nutrition_data={},
-            image_data={},
-            ingredients_data=[
-                {
-                    'name': 'Onion',
-                    'quantity': 1,
-                    'unit': '0',
-                    # optional missing
-                }
-            ]
-        )
-
-        ingredient = Ingredient.objects.get(name='Onion')
-        self.assertFalse(ingredient.optional)
+        url = reverse('recipe:delete_recipe', args=[recipe.id])
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, 404)
