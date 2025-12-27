@@ -8,6 +8,8 @@ from django.views import View
 from django.utils.decorators import method_decorator
 from .domains import create_recipe_with_details
 from django.utils import timezone
+from django_filters.views import FilterView
+from .filters import RecipeFilter
 
 from django.views.generic import DetailView,ListView, FormView
 from .forms import CollectionForm
@@ -406,3 +408,13 @@ class DeleteRecipeView(LoginRequiredMixin, View):
         recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
         recipe.delete()
         return redirect('recipe:author_recipes')
+    
+class RecipeListView(FilterView):
+    model = Recipe
+    template_name = "recipe.html"
+    context_object_name = "recipes"
+    paginate_by = 12
+    filterset_class = RecipeFilter
+
+    def get_queryset(self):
+        return Recipe.objects.all().order_by("-created")

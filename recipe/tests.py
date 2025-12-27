@@ -257,3 +257,78 @@ class DeleteRecipeViewTest(TestCase, RecipeTestDataMixin):
     def test_delete(self):
         self.client.post(reverse("recipe:delete_recipe", kwargs={"pk": self.recipe.id}))
         self.assertFalse(Recipe.objects.filter(id=self.recipe.id).exists())
+
+class RecipeListViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.recipe1 = self.create_test_recipe(
+            author=self.user,
+            category=Recipe.CategoryTypes.VEG,
+            difficulty=Recipe.DifficultyLevels.EASY,
+            cuisine="Indian",
+            title="Paneer Curry"
+        )
+        self.recipe2 = self.create_test_recipe(
+            author=self.user,
+            category=Recipe.CategoryTypes.VEGAN,
+            difficulty=Recipe.DifficultyLevels.MEDIUM,
+            cuisine="Italian",
+            title="Vegan Pasta"
+        )
+        self.recipe3 = self.create_test_recipe(
+            author=self.user,
+            category=Recipe.CategoryTypes.NON_VEG,
+            difficulty=Recipe.DifficultyLevels.HARD,
+            cuisine="Chinese",
+            title="Chicken Stir Fry"
+        )
+
+    def test_list_view_status_code(self):
+        response = self.client.get(reverse("recipe:list"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_list_view_context(self):
+        response = self.client.get(reverse("recipe:list"))
+        self.assertIn("recipes", response.context)
+
+    def test_filter_by_category(self):
+        response = self.client.get(
+            reverse("recipe:list"), {"category": Recipe.CategoryTypes.VEG}
+        )
+        self.assertIn(self.recipe1, response.context["recipes"])
+        self.assertNotIn(self.recipe2, response.context["recipes"])
+
+    def test_filter_by_difficulty(self):
+        response = self.client.get(
+            reverse("recipe:list"), {"difficulty": Recipe.DifficultyLevels.MEDIUM}
+        )
+        self.assertIn(self.recipe2, response.context["recipes"])
+        self.assertNotIn(self.recipe1, response.context["recipes"])
+
+    def test_filter_by_cuisine(self):
+        response = self.client.get(reverse("recipe:list"), {"cuisine": "Italian"})
+        self.assertIn(self.recipe2, response.context["recipes"])
+        self.assertNotIn(self.recipe1, response.context["recipes"])
+
+    def test_filter_by_search(self):
+        response = self.client.get(reverse("recipe:list"), {"search": "Paneer"})
+        self.assertIn(self.recipe1, response.context["recipes"])
+        self.assertNotIn(self.recipe3, response.context["recipes"])
+
+    def test_multiple_filters(self):
+        response = self.client.get(
+            reverse("recipe:list"),
+            {
+                "category": Recipe.CategoryTypes.VEGAN,
+                "difficulty": Recipe.DifficultyLevels.MEDIUM,
+                "cuisine": "Italian",
+            },
+        )
+        self.assertEqual(list(response.context["recipes"]), [self.recipe2])
+
+    def test_pagination(self):
+        for _ in range(15):
+            self.create_test_recipe(author=self.user)
+        response = self.client.get(reverse("recipe:list"))
+        self.assertTrue(response.context["is_paginated"])
+        self.assertEqual(len(response.context["recipes"]), 12)
