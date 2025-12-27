@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 
     # Pip
     'widget_tweaks',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
