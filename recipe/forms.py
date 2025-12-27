@@ -69,4 +69,3 @@ class IngredientForm(forms.ModelForm):
         self.fields['quantity'].required = False
         self.fields['unit'].required = False
 IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)
-
