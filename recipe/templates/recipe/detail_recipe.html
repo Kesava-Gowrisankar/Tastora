@@ -45,6 +45,9 @@
                                 <img src="{{recipe.get_second_image_url}}" alt="Additional view of {{ recipe.title }}" class="absolute w-full rounded-2xl h-full object-cover ">
             </div>
         </div>
+        <div class="mb-8 w-full mx-auto">
+        {% include 'recipe/detail_templates/other_images.html' with images=recipe.get_remaining_image %}
+    </div>
     </div>
 
 {%endblock%}

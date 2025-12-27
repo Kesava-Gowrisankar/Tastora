@@ -1,15 +1,15 @@
 {% load static %}
 
-<div class="grid grid-cols-2 gap-x-4 mb-10 p-4 relative">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-x-8 mb-10 p-4 relative">
   <!-- Left column -->
-  <div class="px-4 space-y-2 font-roboto ">
-    <h1 class="text-3xl mb-4">Contact Us</h1>
-    <p class="text-md text-gray-500">
+  <div class="px-2 md:px-4 space-y-4 font-roboto">
+    <h1 class="text-2xl md:text-3xl mb-4">Contact Us</h1>
+    <p class="text-sm md:text-md text-gray-500">
       If you have any questions or want to get a free estimate for your mold situation,
       contact us via email or phone call. We will be very happy to help you!
     </p>
 
-    <div class="space-y-6 mt-10 p-4">
+    <div class="space-y-4 md:space-y-6 mt-6 md:mt-10 p-2 md:p-4">
       {% include 'includes/homepage/contact_element.html' with icon='<i class="bi bi-telephone-fill"></i>' text='012 - 456 - 789' %}
       {% include 'includes/homepage/contact_element.html' with icon='<i class="bi bi-envelope-fill"></i>' text='tastora@support.com' %}
       {% include 'includes/homepage/contact_element.html' with icon='<i class="bi bi-geo-alt-fill"></i>' text='Coimbatore, Tamilnadu, India' %}
@@ -18,12 +18,11 @@
   </div>
 
   <!-- Right column -->
-  <div class="w-[90%] h-[90%] bg-orange-400 flex justify-center items-end relative self-end">
-    <!-- Image positioned absolutely to float above bottom -->
+  <div class="w-full md:w-[90%] h-64 md:h-[90%] bg-orange-400 flex justify-center items-end relative self-end mx-auto md:mx-0">
     <img 
       src="{% static 'HomePage/images/profile-2.png' %}" 
       alt="Profile" 
-      class="absolute bottom-12 scale-[135%] "
+      class="absolute bottom-4 md:bottom-12 scale-100 md:scale-[135%] max-w-full h-auto"
     />
   </div>
 </div>

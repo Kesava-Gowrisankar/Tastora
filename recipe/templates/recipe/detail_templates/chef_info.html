@@ -9,7 +9,8 @@
         <div class="text-2xl  flex text-bold space-x-2  items-center font-medium ">
             <h1 class=" font-sans bg-white py-1 px-4 rounded-full text-amber-600"><span class="text-black">{{ recipe.author.username | capfirst }}'s</span> Kitchen</h1>
 
-            <div class="text-sm bg-orange-100/80 text-amber-600 px-3 rounded-full">
+            <div class="space-y-2">
+                <div class="text-sm bg-orange-100/80 text-amber-600 px-3 rounded-full">
                 Created: 
                 {% if recipe.created.date == now.date %}
                     {{ recipe.created|date:"g:i A" }}
@@ -25,6 +26,7 @@
                 {% else %}
                     {{ recipe.modified|date:"M d, Y" }}
                 {% endif %}
+            </div>
             </div>
         </div>
 

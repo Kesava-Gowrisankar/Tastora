@@ -10,6 +10,7 @@ from .domains import create_recipe_with_details
 from django.utils import timezone
 from django_filters.views import FilterView
 from .filters import RecipeFilter
+from django.db.models import Count
 
 from django.views.generic import DetailView,ListView, FormView
 from .forms import CollectionForm
@@ -26,7 +27,10 @@ class HomePage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['latest_recipes'] = Recipe.objects.all()[:RECIPES_ON_HOMEPAGE]
-        context['popular_recipes'] = Recipe.objects.order_by('-likes')[:RECIPES_ON_HOMEPAGE]
+        context['popular_recipes'] = (
+            Recipe.objects.annotate(like_count=Count('liked_by'))
+                  .order_by('-like_count', '-created')[:RECIPES_ON_HOMEPAGE]
+        )
         return context
     
 
@@ -179,7 +183,7 @@ class EditRecipeView(View):
         )
 
         messages.success(request, "Recipe updated successfully!")
-        return redirect('recipe:edit_recipe', pk=recipe.pk)
+        return redirect('recipe:recipe_detail', pk=recipe.pk)
     
     def forms_are_valid(self, forms):
         results = [form.is_valid() for form in forms.values() if hasattr(form, 'is_valid')]
