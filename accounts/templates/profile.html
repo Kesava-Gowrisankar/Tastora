@@ -50,6 +50,14 @@
                 <a href="{% url 'recipe:create_recipe' %}"
                 class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md shadow inline-block">
                 Create Recipe</a>
+
+                
+            </div>
+            <div>
+                <a href="{% url 'recipe:all_collections' %}" class="bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 rounded-md shadow inline-block">View Collections</a>
+                <a href="{% url 'recipe:author_recipes' %}" class="bg-orange-400 hover:bg-orange-500 text-white px-6 py-2 rounded-md shadow inline-block">My Recipe</a>
+            </div>
+            
             </div>
         </div>
     </div>
