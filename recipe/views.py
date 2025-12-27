@@ -257,6 +257,31 @@ class AddToCollectionView(LoginRequiredMixin, FormView):
             'collections': self.collections,
             'recipe_collections': list(self.recipe_collections),
         })
+    
+class AddToCollectionView(LoginRequiredMixin, FormView):
+    template_name = 'recipe/add_to_collection.html'
+    form_class = CollectionForm
+
+    def dispatch(self, request, *args, **kwargs):
+        self.recipe = get_object_or_404(Recipe, pk=self.kwargs['recipe_id'])
+        self.collections = request.user.collections.all()
+        self.recipe_collections = self.collections.filter(recipes=self.recipe).values_list('id', flat=True)
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        new_collection = form.save(commit=False)
+        new_collection.owner = self.request.user
+        new_collection.save()
+        new_collection.recipes.add(self.recipe)
+        return redirect('recipe:add_to_collection', recipe_id=self.recipe.id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'recipe': self.recipe,
+            'collections': self.collections,
+            'recipe_collections': list(self.recipe_collections),
+        })
         return context
 
 
