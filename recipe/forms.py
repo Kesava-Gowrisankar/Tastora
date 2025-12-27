@@ -69,3 +69,14 @@ class IngredientForm(forms.ModelForm):
         self.fields['quantity'].required = False
         self.fields['unit'].required = False
 IngredientFormSetClass = forms.modelformset_factory(Ingredient, form=IngredientForm, extra=1, can_delete=True)
+
+class CollectionForm(forms.ModelForm):
+    class Meta:
+        model = Collection
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'border rounded px-3 py-2',
+                'placeholder': 'Enter collection name'
+            })
+        }
