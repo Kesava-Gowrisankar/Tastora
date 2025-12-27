@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from .domains import create_recipe_with_details, update_recipe_with_details
-from .models import Recipe, Ingredient, Nutrition, RecipeImage
+from .models import Collection, Recipe, Ingredient, Nutrition, RecipeImage
 from .mixins import RecipeTestDataMixin
 
 class CreateRecipeDomainFunctionTestCase(RecipeTestDataMixin, TestCase):
@@ -138,3 +138,122 @@ class UpdateRecipeDomainFunctionTestCase(RecipeTestDataMixin, TestCase):
         self.assertEqual(self.ing1.name, 'Black Salt')
         self.assertEqual(self.ing1.quantity, 3)
         self.assertTrue(self.ing1.optional)
+
+class AddToCollectionViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.recipe = self.create_test_recipe(author=self.user)
+
+    def test_get(self):
+        response = self.client.get(reverse("recipe:add_to_collection", kwargs={"recipe_id": self.recipe.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_post(self):
+        response = self.client.post(
+            reverse("recipe:add_to_collection", kwargs={"recipe_id": self.recipe.id}),
+            {"name": "Test Collection"}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Collection.objects.filter(owner=self.user, name="Test Collection").exists())
+
+
+class ToggleCollectionMembershipViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.recipe = self.create_test_recipe(author=self.user)
+        self.collection = Collection.objects.create(name="My Collection", owner=self.user)
+
+    def test_add_recipe(self):
+        self.client.post(
+            reverse(
+                "recipe:toggle_collection",
+                kwargs={"recipe_id": self.recipe.id, "collection_id": self.collection.id},
+            )
+        )
+        self.assertTrue(self.collection.recipes.filter(id=self.recipe.id).exists())
+
+    def test_remove_recipe(self):
+        self.collection.recipes.add(self.recipe)
+        self.client.post(
+            reverse(
+                "recipe:toggle_collection",
+                kwargs={"recipe_id": self.recipe.id, "collection_id": self.collection.id},
+            )
+        )
+        self.assertFalse(self.collection.recipes.filter(id=self.recipe.id).exists())
+
+
+class AllCollectionViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.collection = Collection.objects.create(name="My Collection", owner=self.user)
+
+    def test_list(self):
+        response = self.client.get(reverse("recipe:all_collections"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.collection, response.context["collections"])
+
+
+class CollectionDetailViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.recipe = self.create_test_recipe(author=self.user)
+        self.collection = Collection.objects.create(name="My Collection", owner=self.user)
+        self.collection.recipes.add(self.recipe)
+
+    def test_get(self):
+        response = self.client.get(reverse("recipe:collection_detail", kwargs={"pk": self.collection.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_update_name(self):
+        self.client.post(
+            reverse("recipe:collection_detail", kwargs={"pk": self.collection.id}),
+            {"name": "Updated", "update_name": "1"}
+        )
+        self.collection.refresh_from_db()
+        self.assertEqual(self.collection.name, "Updated")
+
+    def test_remove_recipe(self):
+        self.client.post(
+            reverse("recipe:collection_detail", kwargs={"pk": self.collection.id}),
+            {"remove_recipe": "1", "recipe_id": self.recipe.id}
+        )
+        self.assertFalse(self.collection.recipes.filter(id=self.recipe.id).exists())
+
+
+class DeleteCollectionViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.collection = Collection.objects.create(name="My Collection", owner=self.user)
+
+    def test_delete(self):
+        self.client.post(reverse("recipe:delete_collection", kwargs={"pk": self.collection.id}))
+        self.assertFalse(Collection.objects.filter(id=self.collection.id).exists())
+
+
+class AuthorRecipeListViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.recipe = self.create_test_recipe(author=self.user)
+
+    def test_list(self):
+        response = self.client.get(reverse("recipe:author_recipes"))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.recipe, response.context["recipes"])
+
+
+class DeleteRecipeViewTest(TestCase, RecipeTestDataMixin):
+    def setUp(self):
+        self.user = self.create_test_user()
+        self.client.force_login(self.user)
+        self.recipe = self.create_test_recipe(author=self.user)
+
+    def test_delete(self):
+        self.client.post(reverse("recipe:delete_recipe", kwargs={"pk": self.recipe.id}))
+        self.assertFalse(Recipe.objects.filter(id=self.recipe.id).exists())
