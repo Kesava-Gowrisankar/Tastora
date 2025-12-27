@@ -4,12 +4,14 @@
         {% url 'recipe:home' as home_url %}
         {% include "includes/partials/navbtn.html" with btn_name="Home" btn_link=home_url%}
 
-        {% include "includes/partials/navbtn.html" with btn_name="About"%}
+        {% url 'recipe:about' as about_url %}
+        {% include "includes/partials/navbtn.html" with btn_name="About" btn_link=about_url %}
 
         {% url 'recipe:recipes' as recipe_url %}
         {% include "includes/partials/navbtn.html" with btn_name="Recipes" btn_link=recipe_url %}
 
-        {% include "includes/partials/navbtn.html" with btn_name="Contact"%}
+        {% include "includes/partials/navbtn.html" with btn_name="Contact" btn_link=home_url|add:"#contact" %}
+
     </div>
 
     <div class="flex space-x-4 items-center">

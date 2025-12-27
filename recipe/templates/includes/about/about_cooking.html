@@ -1,0 +1,41 @@
+{% load static %}
+
+<div class="w-[90vw] grid grid-cols-4 grid-rows-2 gap-x-2 mx-auto mb-4 p-8 font-sans">
+    <!-- Content 1 -->
+    <div class="row-span-2 overflow-hidden relative rounded-xl bg-cover bg-center" 
+         style="background-image: url('{% static 'HomePage/images/person-cooking-japanese-food.jpg' %}');">
+    </div>
+
+    <!-- Content 2 -->
+    <div class="col-span-3 p-4 space-y-4 relative self-center">
+        <div class="text-3xl space-y-2">
+            <h1>We believe in the</h1>
+            <h1><span class="text-orange-400">transformative</span> power</h1>
+            <h1>of cooking and good food</h1>
+        </div>
+        <p class="text-gray-500 text-sm font-light">
+            We are a home to variety of recipes worldwide for you to learn to have an opportunity to savor life. Our platform is a celebration of culinary diversity, bringing together home cooks and food enthusiasts
+        </p>
+
+        <div class="text-white absolute top-2 right-4 flex bg-black rounded-full px-6 py-2 gap-2">
+            Our History <i class="bi bi-hourglass"></i>
+        </div>
+    </div>
+
+    <div class="col-span-3 grid-cols-4 grid">
+        <!-- Content 3 -->
+        <div class="self-end px-4 space-y-4 col-span-2">
+            {% include 'includes/about/info_card.html' with icon1='<i class="bi bi-award"></i>' heading1='Achievement' desc1='Cook 2 foods today' icon2='<i class="bi bi-crosshair"></i>' heading2='Live Now' desc2='Chef Mark Johnson' icon3='<i class="bi bi-egg-fried"></i>' heading3="Today's Recipe" desc3='Spaghetti Bolognese' %}
+        </div>
+
+        <!-- Content 4 -->
+        <div class="self-end">
+            {% include 'includes/about/quote_card.html' with quote_text="Cooking has never been this easy!" author_name="Marsha Rianty" author_role="Master Chef 2023" author_img="HomePage/images/profile-1.jpg" card_icon='<i class="bi bi-heart"></i>' %}
+        </div>
+
+        <!-- Content 5 -->
+        <div class="px-4 self-end">
+            {% include 'includes/about/icon_img_icon_text.html' with card_img='HomePage/images/close-up-vegetables-kitchen.jpg' card_icon2='<i class="bi bi-search-heart text-black text-orange-400 bg-orange-100 px-2 rounded-full"></i>' card_text2='Easy to follow recipe' card_text1='Step #1' %}
+        </div>
+    </div>
+</div>

@@ -418,3 +418,6 @@ class RecipeListView(FilterView):
 
     def get_queryset(self):
         return Recipe.objects.all().order_by("-created")
+
+class AboutPage(TemplateView):
+    template_name = 'about.html'
