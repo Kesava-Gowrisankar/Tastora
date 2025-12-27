@@ -21,10 +21,10 @@
 
         <div class="grid grid-cols-3 gap-x-2 max-h-full  justify-center  p-4">
             <div class="col-span-2 self-center ">
-                 {% include 'recipe/detail_templates/ingredient.html' with ingredient=ingredient %}
+                 {% include 'recipe/detail_templates/ingredient.html' with ingredients=recipe.ingredients.all %}
             </div>
             <div class="">
-                {% include 'recipe/detail_templates/nutrition_info.html' with nutrition=nutrition %}
+                {% include 'recipe/detail_templates/nutrition_info.html' with nutrition=recipe.nutrition %}
             </div>
         </div>
 
