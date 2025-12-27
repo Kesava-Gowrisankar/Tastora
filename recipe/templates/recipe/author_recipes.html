@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="w-[90vw] mx-auto mt-8 mb-8">
+  <h1 class="text-4xl text-center mb-8">Your <span class="text-orange-400">Recipes</span></h1>
+
+  {% if recipes %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {% for recipe in recipes %}
+        <div class="border rounded-lg p-4 bg-white shadow-md relative group transition-transform duration-300 hover:scale-105">
+          
+          <!-- Delete -->
+          <a href="{% url 'recipe:delete_recipe' recipe.pk %}"
+             class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:scale-125 transition duration-200 z-20">
+            ×
+          </a>
+
+          <!-- Edit -->
+          <a href="{% url 'recipe:edit_recipe' recipe.pk %}"
+             class="absolute top-2 right-12 w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:scale-125 transition duration-200 z-20">
+            ✎
+          </a>
+
+          <!-- Entire card clickable -->
+          <a href="{% url 'recipe:recipe_detail' recipe.pk %}" class="block">
+
+            <img src="{{ recipe.get_first_image_url }}" alt="{{ recipe.title }}"
+                 class="w-full h-48 object-cover rounded">
+
+            <h3 class="text-4xl font-semibold mt-3 text-center">{{ recipe.title|capfirst }}</h3>
+
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-center text-gray-600 mt-8">You have not added any recipes yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
