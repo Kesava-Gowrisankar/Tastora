@@ -338,7 +338,7 @@ class AddToCollectionView(LoginRequiredMixin, FormView):
 # Class-based view to toggle a recipe in/out of a collection
 class ToggleCollectionMembershipView(LoginRequiredMixin, View):
 
-    def get(self, request, recipe_id, collection_id):
+    def post(self, request, recipe_id, collection_id):
         recipe = get_object_or_404(Recipe, pk=recipe_id)
         collection = get_object_or_404(Collection, pk=collection_id, owner=request.user)
 
@@ -431,4 +431,3 @@ class DeleteRecipeView(LoginRequiredMixin, View):
         recipe = get_object_or_404(Recipe, pk=pk, author=request.user)
         recipe.delete()
         return redirect('recipe:author_recipes')
-    
