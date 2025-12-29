@@ -19,8 +19,8 @@
         </div>
 
         <div class="w-[40vw] absolute bottom-8 left-8 h-10 flex space-x-4">
-
-            {% include 'includes/partials/icon_text_btn.html' with btn_link="#" btn_icon='<i class="bi bi-egg-fried"></i>' btn_text='Explore recipe' btn_bg="bg-black" %}
+            {% url 'recipe:recipes' as recipes_url %}
+            {% include 'includes/partials/icon_text_btn.html' with btn_link=recipes_url btn_icon='<i class="bi bi-egg-fried"></i>' btn_text='Explore recipe' btn_bg="bg-black" %}
             {% include 'includes/partials/icon_text_btn.html' with btn_link="#" btn_icon='<i class="bi bi-download"></i>' btn_text='Get our mobile app' %}
         </div>
     </div>
