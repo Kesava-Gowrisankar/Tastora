@@ -1,10 +1,8 @@
-{%load static%}
-
-<div  class="font-open flex items-center space-x-2 flex items-center {{btn_bg}} px-2 rounded-xl transition transform hover:-translate-y-1 hover:shadow-lg">
-    <a href="{{ btn_link }}" class="{%if btn_bg%} text-white {%endif%} ">{{ btn_text }}</a>
-    <div class="{%if btn_bg%} text-white {%endif%}">
-        {% if btn_icon %}
-        {{ btn_icon|safe }}
+<div class="font-open flex items-center space-x-2 {{ btn_bg }} px-2 rounded-xl transition transform hover:-translate-y-1 hover:shadow-lg">
+    <a href="{{ btn_link }}" class="{% if btn_bg %}text-white{% endif %}">
+        {{ btn_text }}
+    </a>
+    {% if btn_icon_class %}
+        <i class="bi {{ btn_icon_class }} {% if btn_bg %}text-white{% endif %}"></i>
     {% endif %}
-    </div>
 </div>
