@@ -1,65 +1,68 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
+
 {% block content %}
-<form method="POST" enctype="multipart/form-data" class="min-h-screen flex justify-center items-center bg-gray-100 py-10">
-    {% csrf_token %}
-    
-    <div class="grid grid-cols-3 gap-10 bg-white shadow-md rounded-lg p-8 w-3/4">
-        <!-- LEFT: Profile Picture -->
-        <div class="flex justify-center items-center">
-            {% include "includes/profile_picture.html" with profile=form.profile_picture %}
+<div class="min-h-screen bg-gray-100 relative flex flex-col space-y-6 justify-center items-center">
+    <a href="{% url 'logout_confirm' %}" class="absolute top-6 right-6 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md shadow">Logout</a>
+
+    <form method="POST" enctype="multipart/form-data"
+          class="w-full max-w-4xl bg-white rounded-xl shadow-lg p-10 space-y-10">
+        {% csrf_token %}
+
+        <div class="flex flex-col space-y-8">
+            <div class="flex space-x-8 items-start">
+                <div class="flex-shrink-0">
+                    {% include "includes/profile_picture.html" with profile=form.profile_picture %}
+                </div>
+
+                <div class="flex flex-col space-y-6 w-full">
+                    <div>
+                        <label for="{{ form.bio.id_for_label }}" class="block text-gray-700 font-semibold mb-2">
+                            {{ form.bio.label }}
+                        </label>
+                        {{ form.bio|add_class:"w-full border border-gray-300 rounded-md px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
+                        {% if form.bio.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.bio.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.location.id_for_label }}" class="block text-gray-700 font-semibold mb-2">
+                            {{ form.location.label }}
+                        </label>
+                        {{ form.location|add_class:"w-full border border-gray-300 rounded-md px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
+                        {% if form.location.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.location.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md shadow self-start">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+
         </div>
+    </form>
 
-        <!-- RIGHT: Profile Fields -->
-        <div class="col-span-2 flex flex-col justify-center space-y-6">
-            <!-- Bio Field -->
-            <div>
-                <label for="{{ form.bio.id_for_label }}" class="block text-gray-700 font-semibold mb-2">
-                    {{ form.bio.label }}
-                </label>
-                {{ form.bio|add_class:"w-full border border-gray-300 rounded-md px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
-                {% if form.bio.errors %}
-                    <p class="text-red-500 text-sm mt-1">{{ form.bio.errors|join:", " }}</p>
-                {% endif %}
-            </div>
+    <div>
+        <div class="flex justify-center space-x-6">
+            <a href="{% url 'recipe:all_collections' %}"
+            class="bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 rounded-md shadow">
+                View Collections
+            </a>
 
-            <!-- Location Field -->
-            <div>
-                <label for="{{ form.location.id_for_label }}" class="block text-gray-700 font-semibold mb-2">
-                    {{ form.location.label }}
-                </label>
-                {{ form.location|add_class:"w-full border border-gray-300 rounded-md px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-400" }}
-                {% if form.location.errors %}
-                    <p class="text-red-500 text-sm mt-1">{{ form.location.errors|join:", " }}</p>
-                {% endif %}
-            </div>
+            <a href="{% url 'recipe:author_recipes' %}"
+            class="bg-orange-400 hover:bg-orange-500 text-white px-6 py-2 rounded-md shadow">
+                My Recipes
+            </a>
 
-            <!-- Buttons -->
-            <div class="flex space-x-4">
-                <!-- Save -->
-                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md shadow">
-                    Save Changes
-                </button>
-
-                <!-- Logout (link, not form) -->
-                <a href="{% url 'logout_confirm' %}"
-                   class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-md shadow inline-block">
-                    Logout
-                </a>
-
-                <a href="{% url 'recipe:create_recipe' %}"
-                class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md shadow inline-block">
-                Create Recipe</a>
-
-                
-            </div>
-            <div>
-                <a href="{% url 'recipe:all_collections' %}" class="bg-amber-400 hover:bg-amber-500 text-white px-6 py-2 rounded-md shadow inline-block">View Collections</a>
-                <a href="{% url 'recipe:author_recipes' %}" class="bg-orange-400 hover:bg-orange-500 text-white px-6 py-2 rounded-md shadow inline-block">My Recipe</a>
-            </div>
-            
-            </div>
+            <a href="{% url 'recipe:create_recipe' %}"
+                class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-md shadow">
+                Create Recipe
+            </a>
         </div>
     </div>
-</form>
+</div>
 {% endblock %}
