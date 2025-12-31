@@ -73,7 +73,7 @@ class Recipe(TimeStampedModel):
         return f"{settings.MEDIA_URL}default-recipe.jpg"
 
     def get_first_image_url(self):
-        latest_image = self.images.all().last()
+        latest_image = self.images.order_by('created').first()
         if latest_image and latest_image.image:
             return latest_image.image.url
         return self.default_recipe_image_url()
@@ -86,7 +86,7 @@ class Recipe(TimeStampedModel):
         return self.default_recipe_image_url()
 
     def get_remaining_image(self):
-        images = self.images.order_by('-created')[2:]
+        images = self.images.order_by('created')[2:]
         return images if images.exists() else None
 
     def get_absolute_url(self):
